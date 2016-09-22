@@ -318,6 +318,8 @@ init_buildiso(){
 
 init_deployiso(){
 
+    [[ -z ${remote_project} ]] && remote_project="manjarolinux-community"
+
     [[ -z ${account} ]] && account="[SetUser]"
 
     [[ -z ${limit} ]] && limit=100
