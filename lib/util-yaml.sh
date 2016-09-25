@@ -139,18 +139,20 @@ write_services_conf(){
 
 write_displaymanager_conf(){
     local conf="${modules_dir}/displaymanager.conf"
-    msg2 "Writing %s ..." "${conf##*/}"
-    echo "---" > "$conf"
-    echo "displaymanagers:" >> "$conf"
-    echo "  - ${displaymanager}" >> "$conf"
-    echo '' >> "$conf"
-    if $(is_valid_de); then
-        echo "defaultDesktopEnvironment:" >> "$conf"
-        echo "    executable: \"${default_desktop_executable}\"" >> "$conf"
-        echo "    desktopFile: \"${default_desktop_file}\"" >> "$conf"
+    if ${unpackfs} && ! ${netinstall};then
+        msg2 "Writing %s ..." "${conf##*/}"
+        echo "---" > "$conf"
+        echo "displaymanagers:" >> "$conf"
+        echo "  - ${displaymanager}" >> "$conf"
+        echo '' >> "$conf"
+        if $(is_valid_de); then
+            echo "defaultDesktopEnvironment:" >> "$conf"
+            echo "    executable: \"${default_desktop_executable}\"" >> "$conf"
+            echo "    desktopFile: \"${default_desktop_file}\"" >> "$conf"
+        fi
+        echo '' >> "$conf"
+        echo "basicSetup: false" >> "$conf"
     fi
-    echo '' >> "$conf"
-    echo "basicSetup: false" >> "$conf"
 }
 
 write_initcpio_conf(){
