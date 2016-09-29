@@ -109,7 +109,6 @@ LIBS_YAML = \
 	lib/util-yaml.sh
 
 SHARED_YAML = \
-	data/desktop.map \
 	data/linux.preset
 
 SCHEMAS = \

@@ -161,18 +161,11 @@ write_live_session_conf(){
     echo '' >> ${conf}
     echo '# live group membership' >> ${conf}
     echo "addgroups='${addgroups}'" >> ${conf}
-    echo '' >> ${conf}
-    echo '# iso name' >> ${conf}
-    echo "iso_name=${iso_name}" >> ${conf}
-    echo '' >> ${conf}
-    echo '# default_desktop_file' >> ${conf}
-    echo "default_desktop_file=${default_desktop_file}" >> ${conf}
-    echo '' >> ${conf}
-    echo '# default_desktop_executable' >> ${conf}
-    echo "default_desktop_executable=${default_desktop_executable}" >> ${conf}
-    echo '' >> ${conf}
-    echo '# samba workgroup' >> ${conf}
-    echo "smb_workgroup=${smb_workgroup}" >> ${conf}
+    if [[ -n ${smb_workgroup} ]];then
+        echo '' >> ${conf}
+        echo '# samba workgroup' >> ${conf}
+        echo "smb_workgroup=${smb_workgroup}" >> ${conf}
+    fi
 }
 
 configure_hosts(){
@@ -199,6 +192,18 @@ configure_system(){
             sed -i -e "s|^.*hostname=.*|${hn}|" $1/etc/conf.d/hostname
         ;;
     esac
+}
+
+configure_live_image(){
+    msg "Configuring [live-image]"
+    configure_hosts "$1"
+    configure_lsb "$1"
+    configure_mhwd "$1"
+    configure_system "$1"
+    configure_services "$1"
+    configure_calamares "$1"
+    write_live_session_conf "$1"
+    msg "Done configuring [live-image]"
 }
 
 make_repo(){

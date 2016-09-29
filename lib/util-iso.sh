@@ -171,12 +171,8 @@ make_iso() {
 gen_iso_fn(){
     local vars=() name
     vars+=("${iso_name}")
-    if ! ${netinstall};then
+    if ! ${chrootcfg};then
         [[ -n ${profile} ]] && vars+=("${profile}")
-    else
-        if ${unpackfs};then
-            [[ -n ${profile} ]] && vars+=("${profile}")
-        fi
     fi
     [[ ${initsys} == 'openrc' ]] && vars+=("${initsys}")
     vars+=("${dist_release}")
@@ -244,19 +240,6 @@ mount_image_select(){
     else
         mount_image "$1"
     fi
-}
-
-configure_live_image(){
-    msg "Configuring [live-image]"
-    detect_desktop_env "$1"
-    configure_hosts "$1"
-    configure_lsb "$1"
-    configure_mhwd "$1"
-    configure_system "$1"
-    configure_services "$1"
-    configure_calamares "$1"
-    write_live_session_conf "$1"
-    msg "Done configuring [live-image]"
 }
 
 make_image_live() {

@@ -372,8 +372,11 @@ check_profile_vars(){
     if ! is_valid_bool "${netinstall}";then
         die "netinstall only accepts true/false value!"
     fi
-    if ! is_valid_bool "${unpackfs}";then
-        die "unpackfs only accepts true/false value!"
+    if ! is_valid_bool "${chrootcfg}";then
+        die "chrootcfg only accepts true/false value!"
+    fi
+    if ! is_valid_bool "${geoip}";then
+        die "geoip only accepts true/false value!"
     fi
 }
 
@@ -455,7 +458,7 @@ load_profile_config(){
 
     [[ -z ${netinstall} ]] && netinstall='false'
 
-    [[ -z ${unpackfs} ]] && unpackfs='true'
+    [[ -z ${chrootcfg} ]] && chrootcfg='false'
 
     [[ -z ${netgroups} ]] && netgroups="https://raw.githubusercontent.com/manjaro/manjaro-tools-iso-profiles/master/shared/netinst"
 
@@ -500,7 +503,7 @@ reset_profile(){
     unset tracker_url
     unset piece_size
     unset netinstall
-    unset unpackfs
+    unset chrootcfg
     unset netgroups
     unset geoip
 }
@@ -544,8 +547,8 @@ check_profile(){
 
     [[ -f "${profile_dir}/Packages-Mhwd" ]] && packages_mhwd=${profile_dir}/Packages-Mhwd
 
-    if ! ${netinstall} && ! ${unpackfs};then
-        unpackfs="true"
+    if ! ${netinstall}; then
+        chrootcfg="false"
     fi
 }
 

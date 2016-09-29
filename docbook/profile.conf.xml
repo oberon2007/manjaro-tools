@@ -91,47 +91,6 @@
 			</varlistentry>
 
 			<varlistentry>
-				<term><varname>default_desktop_executable=</varname></term>
-				<term><varname>default_desktop_file=</varname></term>
-
-				<listitem><para>Executable and desktop file used to set witch
-				desktop environment the display manager will run by default.
-				default_desktop_executable= defines a binary in /usr/bin and
-				default_desktop_file a .desktop file in /usr/share/xsessions,
-				skipping the .desktop part.
-				<screen>
-				default_desktop_executable=startxfce4
-				default_desktop_file=xfce
-				</screen>
-				If one or both values are not set or "none" (the default) buildiso
-				will try to autodetect the desktop environment.
-				</para>
-				<para>
-				Incomplete list of possible values:
-				</para>
-				<screen>
-				Desktop         Desktop executable      Desktop file
-				--------------------------------------------------------
-				Budgie          budgie-session          budgie-session
-				Cinnamon        cinnamon-session        cinnamon-session
-				Enlightenment   enlightenment_start     enlightenment
-				Gnome           gnome-session           gnome
-				i3              i3                      i3
-				KDE Plasma 4    startkde                kde-plasma
-				KDE Plasma 5    startkde                plasma
-				LXDE            lxsession               LXDE
-				LXDE            startlxde               LXDE
-				LXQt            lxqt-session            lxqt
-				Mate            mate-session            mate
-				Openbox         openbox-session         openbox
-				Pantheon        pantheon-session        pantheon
-				PekWM           pekwm                   pekwm
-				Xfce            startxfce4              xfce
-				</screen>
-				</listitem>
-			</varlistentry>
-
-			<varlistentry>
 				<term><varname>netinstall=</varname></term>
 
 				<listitem><para>Accepts
@@ -141,7 +100,7 @@
 			</varlistentry>
 
 			<varlistentry>
-				<term><varname>unpackfs=</varname></term>
+				<term><varname>chrootcfg=</varname></term>
 
 				<listitem><para>Accepts
 						<option>true</option> (the default)
