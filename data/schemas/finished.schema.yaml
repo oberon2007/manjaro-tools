@@ -1,6 +1,0 @@
----
-type: map
-mapping:
-    "restartNowEnabled": { type: bool, default: true }
-    "restartNowChecked": { type: bool, default: false }
-    "restartNowCommand": { type: str, required: true }

@@ -360,7 +360,8 @@ check_yaml(){
 #             cp $1 $data
         ;;
     esac
-    schema=${DATADIR}/schemas/$name.schema.yaml
+    local schemas_dir=/usr/share/calamares/schemas
+    schema=${schemas_dir}/$name.schema.yaml
 #     pykwalify -d $data -s $schema
     kwalify -lf $schema $data
 }

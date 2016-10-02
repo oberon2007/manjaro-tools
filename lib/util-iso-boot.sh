@@ -10,13 +10,13 @@
 # GNU General Public License for more details.
 
 copy_efi_shells(){
-    if [[ -f ${DATADIR}/efi_shell/shellx64_v1.efi ]];then
+    if [[ -f $1${DATADIR}/efi_shell/shellx64_v1.efi ]];then
         msg2 "Copying shellx64_v1.efi ..."
-        cp ${DATADIR}/efi_shell/shellx64_v1.efi $1/
+        cp $1${DATADIR}/efi_shell/shellx64_v1.efi $2/
     fi
-    if [[ -f ${DATADIR}/efi_shell/shellx64_v2.efi ]];then
+    if [[ -f $1${DATADIR}/efi_shell/shellx64_v2.efi ]];then
         msg2 "Copying shellx64_v2.efi ..."
-        cp ${DATADIR}/efi_shell/shellx64_v2.efi $1/
+        cp $1${DATADIR}/efi_shell/shellx64_v2.efi $2/
     fi
 }
 
@@ -88,106 +88,63 @@ write_loader_conf(){
     local conf=$1/${fn}
     msg2 "Writing %s ..." "${fn}"
     echo 'timeout 3' > ${conf}
-    echo "default ${iso_name}-${target_arch}" >> ${conf}
+    echo "default ${iso_name}-${target_arch}-free" >> ${conf}
 }
 
-write_efi_shellv1_conf(){
-    local fn=uefi-shell-v1-${target_arch}.conf
+write_efi_shell_conf(){
+    local fn=uefi-shell-$2-${target_arch}.conf
     local conf=$1/${fn}
     msg2 "Writing %s ..." "${fn}"
-    echo "title  UEFI Shell ${target_arch} v1" > ${conf}
-    echo "efi    /EFI/shellx64_v1.efi" >> ${conf}
+    echo "title  UEFI Shell ${target_arch} $2" > ${conf}
+    echo "efi    /EFI/shellx64_$2.efi" >> ${conf}
 }
 
-write_efi_shellv2_conf(){
-    local fn=uefi-shell-v2-${target_arch}.conf
-    local conf=$1/${fn}
+write_usb_efi_loader_conf(){
+    local drv='free' switch="$3"
+    [[ ${switch} == 'yes' ]] && drv='nonfree'
+    local fn=${iso_name}-${target_arch}-${drv}.conf
+    local conf=$1/${fn} path="$2"
     msg2 "Writing %s ..." "${fn}"
-    echo "title  UEFI Shell ${target_arch} v2" > ${conf}
-    echo "efi    /EFI/shellx64_v2.efi" >> ${conf}
-}
-
-write_dvd_conf(){
-    local fn=${iso_name}-${target_arch}.conf
-    local conf=$1/${fn} path=$2
-    msg2 "Writing %s ..." "${fn}"
-    echo "title   ${dist_name} Linux ${target_arch} UEFI DVD (default)" > ${conf}
-    echo "linux   /EFI/miso/${iso_name}.efi" >> ${conf}
-    if [[ -f ${path}/${iso_name}/boot/intel_ucode.img ]] ; then
-        msg2 "Using intel_ucode.img ..."
-        echo "initrd  /EFI/miso/intel_ucode.img" >> ${conf}
-    fi
-    echo "initrd  /EFI/miso/${iso_name}.img" >> ${conf}
-    echo "options misobasedir=${iso_name} misolabel=${iso_label} nouveau.modeset=1 i915.modeset=1 radeon.modeset=1 logo.nologo overlay=free" >> ${conf}
-}
-
-write_dvd_nonfree_conf(){
-    local fn=${iso_name}-${target_arch}-nonfree.conf
-    local conf=$1/${fn} path=$2
-    msg2 "Writing %s ..." "${fn}"
-    echo "title   ${dist_name} Linux ${target_arch} UEFI DVD (nonfree)" > ${conf}
-    echo "linux   /EFI/miso/${iso_name}.efi" >> ${conf}
-    if [[ -f ${path}/${iso_name}/boot/intel_ucode.img ]] ; then
-        msg2 "Using intel_ucode.img ..."
-        echo "initrd  /EFI/miso/intel_ucode.img" >> ${conf}
-    fi
-    echo "initrd  /EFI/miso/${iso_name}.img" >> ${conf}
-    echo "options misobasedir=${iso_name} misolabel=${iso_label} nouveau.modeset=1 i915.modeset=1 radeon.modeset=1 logo.nologo overlay=nonfree nonfree=yes" >> ${conf}
-}
-
-write_usb_conf(){
-    local fn=${iso_name}-${target_arch}.conf
-    local conf=$1/${fn} path=$2
-    msg2 "Writing %s ..." "${fn}"
-    echo "title   ${dist_name} Linux ${target_arch} UEFI USB (default)" > ${conf}
+    echo "title   ${dist_name} Linux ${target_arch} UEFI USB (${drv})" > ${conf}
     echo "linux   /${iso_name}/boot/${target_arch}/${iso_name}" >> ${conf}
     if [[ -f ${path}/${iso_name}/boot/intel_ucode.img ]] ; then
         msg2 "Using intel_ucode.img ..."
         echo "initrd  /${iso_name}/boot/intel_ucode.img" >> ${conf}
     fi
     echo "initrd  /${iso_name}/boot/${target_arch}/${iso_name}.img" >> ${conf}
-    echo "options misobasedir=${iso_name} misolabel=${iso_label} nouveau.modeset=1 i915.modeset=1 radeon.modeset=1 logo.nologo overlay=free" >> ${conf}
+    echo "options misobasedir=${iso_name} misolabel=${iso_label} nouveau.modeset=1 i915.modeset=1 radeon.modeset=1 logo.nologo overlay=${drv} nonfree=${switch}" >> ${conf}
 }
 
-write_usb_nonfree_conf(){
-    local fn=${iso_name}-${target_arch}-nonfree.conf
-    local conf=$1/${fn} path=$2
+write_dvd_efi_loader_conf(){
+    local drv='free' switch="$3"
+    [[ ${switch} == 'yes' ]] && drv='nonfree'
+    local fn=${iso_name}-${target_arch}-${drv}.conf
+    local conf=$1/${fn} path="$2"
     msg2 "Writing %s ..." "${fn}"
-    echo "title   ${dist_name} Linux ${target_arch} UEFI USB (nonfree)" > ${conf}
-    echo "linux   /${iso_name}/boot/${target_arch}/${iso_name}" >> ${conf}
+    echo "title   ${dist_name} Linux ${target_arch} UEFI DVD (${drv})" > ${conf}
+    echo "linux   /EFI/miso/${iso_name}.efi" >> ${conf}
     if [[ -f ${path}/${iso_name}/boot/intel_ucode.img ]] ; then
         msg2 "Using intel_ucode.img ..."
-        echo "initrd  /${iso_name}/boot/intel_ucode.img" >> ${conf}
+        echo "initrd  /EFI/miso/intel_ucode.img" >> ${conf}
     fi
-    echo "initrd  /${iso_name}/boot/${target_arch}/${iso_name}.img" >> ${conf}
-    echo "options misobasedir=${iso_name} misolabel=${iso_label} nouveau.modeset=1 i915.modeset=1 radeon.modeset=1 logo.nologo overlay=nonfree nonfree=yes" >> ${conf}
+    echo "initrd  /EFI/miso/${iso_name}.img" >> ${conf}
+    echo "options misobasedir=${iso_name} misolabel=${iso_label} nouveau.modeset=1 i915.modeset=1 radeon.modeset=1 logo.nologo overlay=${drv} nonfree=${switch}" >> ${conf}
 }
 
 copy_isolinux_bin(){
-    if [[ -e $1/usr/lib/syslinux/bios ]]; then
-        msg2 "Copying isolinux bios binaries ..."
-        cp $1/usr/lib/syslinux/bios/isolinux.bin $2
-        cp $1/usr/lib/syslinux/bios/isohdpfx.bin $2
-        cp $1/usr/lib/syslinux/bios/ldlinux.c32 $2
-        cp $1/usr/lib/syslinux/bios/gfxboot.c32 $2
-        cp $1/usr/lib/syslinux/bios/whichsys.c32 $2
-        cp $1/usr/lib/syslinux/bios/mboot.c32 $2
-        cp $1/usr/lib/syslinux/bios/hdt.c32 $2
-        cp $1/usr/lib/syslinux/bios/chain.c32 $2
-        cp $1/usr/lib/syslinux/bios/libcom32.c32 $2
-        cp $1/usr/lib/syslinux/bios/libmenu.c32 $2
-        cp $1/usr/lib/syslinux/bios/libutil.c32 $2
-        cp $1/usr/lib/syslinux/bios/libgpl.c32 $2
-    else
-        msg2 "Copying isolinux binaries ..."
-        cp $1/usr/lib/syslinux/isolinux.bin $2
-        cp $1/usr/lib/syslinux/isohdpfx.bin $2
-        cp $1/usr/lib/syslinux/gfxboot.c32 $2
-        cp $1/usr/lib/syslinux/whichsys.c32 $2
-        cp $1/usr/lib/syslinux/mboot.c32 $2
-        cp $1/usr/lib/syslinux/hdt.c32 $2
-        cp $1/usr/lib/syslinux/chain.c32 $2
-    fi
+    msg2 "Copying isolinux bios binaries ..."
+    cp $1/usr/lib/syslinux/bios/isolinux.bin $2
+    cp $1/usr/lib/syslinux/bios/isohdpfx.bin $2
+    cp $1/usr/lib/syslinux/bios/ldlinux.c32 $2
+    cp $1/usr/lib/syslinux/bios/gfxboot.c32 $2
+    cp $1/usr/lib/syslinux/bios/whichsys.c32 $2
+    cp $1/usr/lib/syslinux/bios/mboot.c32 $2
+    cp $1/usr/lib/syslinux/bios/hdt.c32 $2
+    cp $1/usr/lib/syslinux/bios/chain.c32 $2
+    cp $1/usr/lib/syslinux/bios/libcom32.c32 $2
+    cp $1/usr/lib/syslinux/bios/libmenu.c32 $2
+    cp $1/usr/lib/syslinux/bios/libutil.c32 $2
+    cp $1/usr/lib/syslinux/bios/libgpl.c32 $2
 }
 
 gen_boot_args(){

@@ -1,5 +1,0 @@
----
-type: map
-mapping:
-    xOrgConfFileName: { type: str, required: true }
-    convertedKeymapPath: { type: str, required: true }

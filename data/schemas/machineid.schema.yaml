@@ -1,6 +1,0 @@
----
-type: map
-mapping:
-    "systemd": { type: bool, default: true }
-    "dbus": { type: bool, default: true }
-    "symlink": { type: bool, default: true }

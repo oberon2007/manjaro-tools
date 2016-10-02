@@ -1,4 +1,0 @@
----
-type: map
-mapping:
-    groupsUrl: { type: str, required: true }
