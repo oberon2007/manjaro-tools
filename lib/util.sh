@@ -565,57 +565,77 @@ get_shared_list(){
 load_pkgs(){
     info "Loading Packages: [%s] ..." "${1##*/}"
 
-    local _init _init_rm _multi _nonfree_default _nonfree_multi _arch _arch_rm _nonfree_i686 _nonfree_x86_64
-
-    if [[ ${initsys} == 'openrc' ]];then
-        _init="s|>openrc||g"
-        _init_rm="s|>systemd.*||g"
-    else
-        _init="s|>systemd||g"
-        _init_rm="s|>openrc.*||g"
-    fi
-    if [[ "${target_arch}" == "i686" ]]; then
-        _arch="s|>i686||g"
-        _arch_rm="s|>x86_64.*||g"
-        _multi="s|>multilib.*||g"
-        _nonfree_multi="s|>nonfree_multilib.*||g"
-        _nonfree_x86_64="s|>nonfree_x86_64.*||g"
-        if ${nonfree_mhwd};then
-            _nonfree_default="s|>nonfree_default||g"
-            _nonfree_i686="s|>nonfree_i686||g"
-
-        else
-            _nonfree_default="s|>nonfree_default.*||g"
-            _nonfree_i686="s|>nonfree_i686.*||g"
-        fi
-    else
-        _arch="s|>x86_64||g"
-        _arch_rm="s|>i686.*||g"
-        _nonfree_i686="s|>nonfree_i686.*||g"
-        if ${multilib};then
-            _multi="s|>multilib||g"
-            if ${nonfree_mhwd};then
-                _nonfree_default="s|>nonfree_default||g"
-                _nonfree_x86_64="s|>nonfree_x86_64||g"
-                _nonfree_multi="s|>nonfree_multilib||g"
-            else
-                _nonfree_default="s|>nonfree_default.*||g"
-                _nonfree_multi="s|>nonfree_multilib.*||g"
-                _nonfree_x86_64="s|>nonfree_x86_64.*||g"
-            fi
-        else
+    local _init _init_rm
+    case "${initsys}" in
+        'openrc')
+            _init="s|>openrc||g"
+            _init_rm="s|>systemd.*||g"
+        ;;
+        *)
+            _init="s|>systemd||g"
+            _init_rm="s|>openrc.*||g"
+        ;;
+    esac
+    
+    local _multi _nonfree_default _nonfree_multi _arch _arch_rm _nonfree_i686 _nonfree_x86_64
+    case "${target_arch}" in
+        "i686")
+            _arch="s|>i686||g"
+            _arch_rm="s|>x86_64.*||g"
             _multi="s|>multilib.*||g"
+            _nonfree_multi="s|>nonfree_multilib.*||g"
+            _nonfree_x86_64="s|>nonfree_x86_64.*||g"
             if ${nonfree_mhwd};then
                 _nonfree_default="s|>nonfree_default||g"
-                _nonfree_x86_64="s|>nonfree_x86_64||g"
-                _nonfree_multi="s|>nonfree_multilib.*||g"
+                _nonfree_i686="s|>nonfree_i686||g"
+
             else
                 _nonfree_default="s|>nonfree_default.*||g"
-                _nonfree_x86_64="s|>nonfree_x86_64.*||g"
-                _nonfree_multi="s|>nonfree_multilib.*||g"
+                _nonfree_i686="s|>nonfree_i686.*||g"
             fi
-        fi
-    fi
+        ;;
+        *)
+            _arch="s|>x86_64||g"
+            _arch_rm="s|>i686.*||g"
+            _nonfree_i686="s|>nonfree_i686.*||g"
+            if ${multilib};then
+                _multi="s|>multilib||g"
+                if ${nonfree_mhwd};then
+                    _nonfree_default="s|>nonfree_default||g"
+                    _nonfree_x86_64="s|>nonfree_x86_64||g"
+                    _nonfree_multi="s|>nonfree_multilib||g"
+                else
+                    _nonfree_default="s|>nonfree_default.*||g"
+                    _nonfree_multi="s|>nonfree_multilib.*||g"
+                    _nonfree_x86_64="s|>nonfree_x86_64.*||g"
+                fi
+            else
+                _multi="s|>multilib.*||g"
+                if ${nonfree_mhwd};then
+                    _nonfree_default="s|>nonfree_default||g"
+                    _nonfree_x86_64="s|>nonfree_x86_64||g"
+                    _nonfree_multi="s|>nonfree_multilib.*||g"
+                else
+                    _nonfree_default="s|>nonfree_default.*||g"
+                    _nonfree_x86_64="s|>nonfree_x86_64.*||g"
+                    _nonfree_multi="s|>nonfree_multilib.*||g"
+                fi
+            fi
+        ;;
+    esac
+    
+    local _edition _edition_rm
+    case "${edition}" in
+        'sonar') 
+            _edition="s|>sonar||g"
+            _edition_rm="s|>manjaro.*||g"
+        ;;
+        *) 
+            _edition="s|>manjaro||g"
+            _edition_rm="s|>sonar.*||g"
+        ;;
+    esac
+    
     local _blacklist="s|>blacklist.*||g" \
         _kernel="s|KERNEL|$kernel|g" \
         _used_kernel=${kernel:5:2} \
@@ -646,6 +666,8 @@ load_pkgs(){
             | sed "$_nonfree_x86_64" \
             | sed "$_nonfree_multi" \
             | sed "$_kernel" \
+            | sed "$_edition" \
+            | sed "$_edition_rm" \
             | sed "$_clean")
 
     if [[ $1 == "${packages_mhwd}" ]]; then

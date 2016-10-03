@@ -328,16 +328,19 @@ make_image_boot() {
 make_efi() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
         msg "Prepare [%s/boot/EFI]" "${iso_name}"
-        local path_iso="${work_dir}/iso"
-        mkdir -p ${path_iso}/EFI/boot
-        copy_efi_loaders "${work_dir}/live-image" "${path_iso}/EFI/boot"
-        mkdir -p ${path_iso}/loader/entries
-        write_loader_conf "${path_iso}/loader"
-        write_efi_shell_conf "${path_iso}/loader/entries" "v1"
-        write_efi_shell_conf "${path_iso}/loader/entries" "v2"
-        write_usb_efi_loader_conf "${path_iso}/loader/entries" "${path_iso}" "no"
-        ${nonfree_mhwd} && write_usb_efi_loader_conf "${path_iso}/loader/entries" "${path_iso}" "yes"
-        copy_efi_shells "${work_dir}/live-image" "${path_iso}/EFI"
+
+        mkdir -p ${work_dir}/iso/EFI/boot
+        mkdir -p ${work_dir}/iso/loader/entries
+        
+        copy_preloader_efi "${work_dir}/live-image" "${work_dir}/iso/EFI/boot"
+        copy_loader_efi "${work_dir}/root-image" "${work_dir}/iso/EFI/boot"
+        
+        write_loader_conf "${work_dir}/iso/loader"
+        write_usb_efi_loader_conf "${work_dir}" "no"
+        if ${nonfree_mhwd};then
+            write_usb_efi_loader_conf "${work_dir}" "yes"
+        fi
+        
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [%s/boot/EFI]" "${iso_name}"
     fi
@@ -347,25 +350,33 @@ make_efi() {
 make_efiboot() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
         msg "Prepare [%s/iso/EFI]" "${iso_name}"
-        local path_iso="${work_dir}/iso" size="31M"
-        mkdir -p ${path_iso}/EFI/miso
-        truncate -s ${size} ${path_iso}/EFI/miso/${iso_name}.img
-        mkfs.fat -n MISO_EFI ${path_iso}/EFI/miso/${iso_name}.img
+
+        mkdir -p ${work_dir}/iso/EFI/miso
+        
+        truncate -s 31M ${work_dir}/iso/EFI/miso/${iso_name}.img
+        mkfs.fat -n MISO_EFI ${work_dir}/iso/EFI/miso/${iso_name}.img
+        
         mkdir -p ${work_dir}/efiboot
-        mount ${path_iso}/EFI/miso/${iso_name}.img ${work_dir}/efiboot
-        local path_efi="${work_dir}/efiboot/EFI"
-        mkdir -p ${path_efi}/miso
-        copy_boot_images "${path_iso}/${iso_name}/boot" "${path_efi}/miso"
-        mkdir -p ${path_efi}/boot
-        copy_efi_loaders "${work_dir}/live-image" "${path_efi}/boot"
-        local efi_loader=${work_dir}/efiboot/loader
-        mkdir -p ${efi_loader}/entries
-        write_loader_conf "${efi_loader}"
-        write_efi_shell_conf "${efi_loader}/entries" "v1"
-        write_efi_shell_conf "${efi_loader}/entries" "v2"
-        write_dvd_efi_loader_conf "${efi_loader}/entries" "${path_iso}" "no"
-        ${nonfree_mhwd} && write_dvd_efi_loader_conf "${efi_loader}/entries" "${path_iso}" "yes"
-        copy_efi_shells "${work_dir}/live-image" "${path_efi}"
+        mount ${work_dir}/iso/EFI/miso/${iso_name}.img ${work_dir}/efiboot
+        
+        mkdir -p ${work_dir}/efiboot/EFI/{miso,boot}
+
+        copy_boot_images "${work_dir}/iso/${iso_name}/boot" "${work_dir}/efiboot/EFI/miso"
+
+        mkdir -p ${work_dir}/efiboot/loader/entries
+        
+        copy_preloader_efi "${work_dir}/live-image" "${work_dir}/efiboot/EFI/boot"
+        copy_loader_efi "${work_dir}/root-image" "${work_dir}/efiboot/EFI/boot"
+        
+        write_loader_conf "${work_dir}/efiboot/loader"
+        write_dvd_efi_loader_conf "${work_dir}" "no"
+        if ${nonfree_mhwd};then
+            write_dvd_efi_loader_conf "${work_dir}" "yes"
+        fi
+
+#         copy_syslinux_efi "${work_dir}/live-image" "${work_dir}/efiboot/EFI/boot"
+        
+
         umount ${work_dir}/efiboot
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [%s/iso/EFI]" "${iso_name}"
