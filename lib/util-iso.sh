@@ -341,6 +341,10 @@ make_efi() {
             write_usb_efi_loader_conf "${work_dir}" "yes"
         fi
         
+#         copy_syslinux_efi "${work_dir}/live-image" "${work_dir}/iso/EFI/boot"
+#         copy_syslinux_bg "${work_dir}/live-image" "${work_dir}/iso/EFI/boot"
+#         write_syslinux_cfg "${work_dir}/iso/EFI/boot" "${work_dir}/iso/${iso_name}/boot"
+        
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [%s/boot/EFI]" "${iso_name}"
     fi
@@ -375,9 +379,11 @@ make_efiboot() {
         fi
 
 #         copy_syslinux_efi "${work_dir}/live-image" "${work_dir}/efiboot/EFI/boot"
-        
+#         copy_syslinux_bg "${work_dir}/live-image" "${work_dir}/efiboot/EFI/boot"
+#         write_syslinux_cfg "${work_dir}/efiboot/EFI/boot" "${work_dir}/iso/${iso_name}/boot"
 
         umount ${work_dir}/efiboot
+        
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [%s/iso/EFI]" "${iso_name}"
     fi
@@ -387,17 +393,16 @@ make_efiboot() {
 make_isolinux() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
         msg "Prepare [%s/iso/isolinux]" "${iso_name}"
-        local path=${work_dir}/iso/isolinux
-        mkdir -p ${path}
-        copy_overlay "${DATADIR}/isolinux" "${path}"
-        write_isolinux_cfg "${path}" "${work_dir}/iso"
-        write_isolinux_msg "${path}"
+        mkdir -p ${work_dir}/iso/isolinux
+        copy_overlay "${DATADIR}/isolinux" "${work_dir}/iso/isolinux"
+        write_isolinux_cfg "${work_dir}"
+        write_isolinux_msg "${work_dir}"
         if [[ -e ${profile_dir}/isolinux-overlay ]]; then
-            copy_overlay "${profile_dir}/isolinux-overlay" "${path}"
-            update_isolinux_cfg "${profile_dir}/isolinux-overlay" "${path}"
-            update_isolinux_msg "${profile_dir}/isolinux-overlay" "${path}"
+            copy_overlay "${profile_dir}/isolinux-overlay" "${work_dir}/iso/isolinux"
+            update_isolinux_cfg "${profile_dir}/isolinux-overlay" "${work_dir}"
+            update_isolinux_msg "${profile_dir}/isolinux-overlay" "${work_dir}"
         fi
-        copy_isolinux_bin "${work_dir}/live-image" "${path}"
+        copy_isolinux_bin "${work_dir}/live-image" "${work_dir}"
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [%s/iso/isolinux]" "${iso_name}"
     fi

@@ -88,15 +88,23 @@ gen_boot_args(){
     echo ${args[@]}
 }
 
+is_intel_ucode(){
+    if [[ -f $1/iso/${iso_name}/boot/intel_ucode.img ]] ; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 write_usb_efi_loader_conf(){
     local drv='free' switch="$2"
     [[ ${switch} == 'yes' ]] && drv='nonfree'
     local fn=${iso_name}-${target_arch}-${drv}.conf
-    local conf=$1/iso/loader/entries/${fn} path="$1/iso"
+    local conf=$1/iso/loader/entries/${fn}
     msg2 "Writing %s ..." "${fn}"
     echo "title   ${dist_name} Linux ${target_arch} UEFI USB (${drv})" > ${conf}
     echo "linux   /${iso_name}/boot/${target_arch}/${iso_name}" >> ${conf}
-    if [[ -f ${path}/${iso_name}/boot/intel_ucode.img ]] ; then
+    if $(is_intel_ucode "$1") ; then
         msg2 "Using intel_ucode.img ..."
         echo "initrd  /${iso_name}/boot/intel_ucode.img" >> ${conf}
     fi
@@ -108,11 +116,11 @@ write_dvd_efi_loader_conf(){
     local drv='free' switch="$2"
     [[ ${switch} == 'yes' ]] && drv='nonfree'
     local fn=${iso_name}-${target_arch}-${drv}.conf
-    local conf=$1/efiboot/loader/entries/${fn} path="$1/iso"
+    local conf=$1/efiboot/loader/entries/${fn}
     msg2 "Writing %s ..." "${fn}"
     echo "title   ${dist_name} Linux ${target_arch} UEFI DVD (${drv})" > ${conf}
     echo "linux   /EFI/miso/${iso_name}.efi" >> ${conf}
-    if [[ -f ${path}/${iso_name}/boot/intel_ucode.img ]] ; then
+    if $(is_intel_ucode "$1") ; then
         msg2 "Using intel_ucode.img ..."
         echo "initrd  /EFI/miso/intel_ucode.img" >> ${conf}
     fi
@@ -122,26 +130,81 @@ write_dvd_efi_loader_conf(){
 
 copy_isolinux_bin(){
     msg2 "Copying isolinux bios binaries ..." 
-    cp $1/usr/lib/syslinux/bios/{{isolinux,isohdpfx}.bin,{ldlinux,gfxboot,whichsys,mboot,hdt,chain,libcom32,libmenu,libutil,libgpl}.c32} $2
+    cp $1/usr/lib/syslinux/bios/{{isolinux,isohdpfx}.bin,{ldlinux,gfxboot,whichsys,mboot,hdt,chain,libcom32,libmenu,libutil,libgpl}.c32} $2/iso/isolinux
 }
 
 copy_syslinux_efi(){
     msg2 "Copying syslinux efi binaries ..."
-    cp $1/usr/lib/syslinux/efi64/{syslinux.efi,ldlinux.e64,{menu,libcom32,libutil}.c32} $2
+    cp $1/usr/lib/syslinux/efi64/{ldlinux.e64,*.c32} $2
+    cp $1/usr/lib/syslinux/efi64/syslinux.efi $2/bootx64.efi
 }
 
 gen_initrd_arg(){
     local path="/${iso_name}/boot/${target_arch}/${iso_name}.img"
     local arg="initrd=${path}"
-    if [[ -f $1/${iso_name}/boot/intel_ucode.img ]] ; then
+    if $(is_intel_ucode "$1") ; then
         arg="initrd=/${iso_name}/boot/intel_ucode.img,${path}"
     fi
     echo $arg
 }
 
+copy_syslinux_bg(){
+    cp $1/usr/share/backhrounds/andromeda.png $2/splash.jpg
+}
+
+write_syslinux_cfg(){
+    local conf=$1/syslinux.cfg
+    echo "DEFAULT free" > $conf
+    echo "PROMPT 1" >> $conf
+    echo "TIMEOUT 200" >> $conf
+    echo "#KBDMAP de.ktl" >> $conf
+    echo "" >> $conf
+    echo "UI vesamenu.c32" >> $conf
+    echo "" >> $conf
+    echo "MENU TITLE ${dist_name} Linux" >> $conf
+    echo "MENU BACKGROUND splash.jpg" >> $conf
+    echo "" >> $conf
+    echo "MENU COLOR border       30;44   #40ffffff #a0000000 std" >> $conf
+    echo "MENU COLOR title        1;36;44 #9033ccff #a0000000 std" >> $conf
+    echo "MENU COLOR sel          7;37;40 #e0ffffff #20ffffff all" >> $conf
+    echo "MENU COLOR unsel        37;44   #50ffffff #a0000000 std" >> $conf
+    echo "MENU COLOR help         37;40   #c0ffffff #a0000000 std" >> $conf
+    echo "MENU COLOR timeout_msg  37;40   #80ffffff #00000000 std" >> $conf
+    echo "MENU COLOR timeout      1;37;40 #c0ffffff #00000000 std" >> $conf
+    echo "MENU COLOR msg07        37;40   #90ffffff #a0000000 std" >> $conf
+    echo "MENU COLOR tabmsg       31;40   #30ffffff #00000000 std" >> $conf
+    echo "" >> $conf
+    local initrd_arg=$(gen_initrd_arg $2)
+    echo "LABEL free" >> $conf
+    echo "    MENU LABEL ${dist_name} Linux ${target_arch}" >> $conf
+    echo "    LINUX ../${iso_name}.efi" >> $conf
+    echo "    APPEND ${initrd_arg} misobasedir=${iso_name} misolabel=${iso_label} nouveau.modeset=1 i915.modeset=1 radeon.modeset=1 logo.nologo overlay=free $(gen_boot_args) showopts" >> $conf
+    echo "    INITRD ../${iso_name}.img" >> $conf
+    if ${nonfree_mhwd};then
+        echo "" >> $conf
+        echo "LABEL nonfree" >> $conf
+        echo "    MENU LABEL ${dist_name} Linux ${target_arch}" >> $conf
+        echo "    LINUX ../${iso_name}.efi" >> $conf
+        echo "    APPEND ${initrd_arg} misobasedir=${iso_name} misolabel=${iso_label} nouveau.modeset=1 i915.modeset=1 radeon.modeset=1 logo.nologo overlay=free $(gen_boot_args) showopts" >> $conf
+        echo "    INITRD ../${iso_name}.img" >> $conf
+    fi
+    echo "" >> $conf
+    echo "LABEL hdt" >> $conf
+    echo "        MENU LABEL HDT (Hardware Detection Tool)" >> $conf
+    echo "        COM32 hdt.c32" >> $conf
+    echo "" >> $conf
+    echo "LABEL reboot" >> $conf
+    echo "        MENU LABEL Reboot" >> $conf
+    echo "        COM32 reboot.c32" >> $conf
+    echo "" >> $conf
+    echo "LABEL poweroff" >> $conf
+    echo "        MENU LABEL Poweroff" >> $conf
+    echo "        COM32 poweroff.c32" >> $conf
+}
+
 write_isolinux_cfg(){
     local fn=isolinux.cfg
-    local conf=$1/${fn} path=$2
+    local conf=$1/iso/isolinux/${fn}
     msg2 "Writing %s ..." "${fn}"
     echo "default start" > ${conf}
     echo "implicit 1" >> ${conf}
@@ -153,7 +216,7 @@ write_isolinux_cfg(){
     echo "label start" >> ${conf}
     echo "  kernel /${iso_name}/boot/${target_arch}/${iso_name}" >> ${conf}
 
-    local initrd_arg=$(gen_initrd_arg $path)
+    local initrd_arg=$(gen_initrd_arg "$1")
 
     echo "  append ${initrd_arg} misobasedir=${iso_name} misolabel=${iso_label} nouveau.modeset=1 i915.modeset=1 radeon.modeset=1 logo.nologo overlay=free $(gen_boot_args) showopts" >> ${conf}
 
@@ -177,7 +240,7 @@ write_isolinux_cfg(){
 
 write_isolinux_msg(){
     local fn=isolinux.msg
-    local conf=$1/${fn}
+    local conf=$1/iso/isolinux/${fn}
     msg2 "Writing %s ..." "${fn}"
     echo "Welcome to ${dist_name} Linux!" > ${conf}
     echo '' >> ${conf}
@@ -199,13 +262,13 @@ update_isolinux_cfg(){
     msg2 "Updating %s ..." "${fn}"
     sed -i "s|%ISO_LABEL%|${iso_label}|g;
             s|%ISO_NAME%|${iso_name}|g;
-            s|%ARCH%|${target_arch}|g" $2/${fn}
+            s|%ARCH%|${target_arch}|g" $2/iso/isolinux/${fn}
 }
 
 update_isolinux_msg(){
     local fn=isolinux.msg
     msg2 "Updating %s ..." "${fn}"
-    sed -i "s|%DIST_NAME%|${dist_name}|g" $2/${fn}
+    sed -i "s|%DIST_NAME%|${dist_name}|g" $2/iso/isolinux/${fn}
 }
 
 write_isomounts(){
