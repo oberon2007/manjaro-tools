@@ -27,6 +27,12 @@ mount_image_custom(){
     track_image -t overlay overlay -olowerdir="${work_dir}/${profile}-image":"${work_dir}/root-image",upperdir="$1",workdir="${work_dir}/work" "$1"
 }
 
+mount_image_live(){
+    IMAGE_ACTIVE_MOUNTS=()
+    mkdir -p "${work_dir}/work"
+    track_image -t overlay overlay -olowerdir="${work_dir}/live-image":"${work_dir}/root-image",upperdir="$1",workdir="${work_dir}/work" "$1"
+}
+
 umount_image(){
     if [[ -n ${IMAGE_ACTIVE_MOUNTS[@]} ]];then
         info "%s umount: [%s]" "${iso_fs}" "${IMAGE_ACTIVE_MOUNTS[@]}"

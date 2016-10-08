@@ -25,6 +25,11 @@ mount_image_custom(){
     track_image -t aufs -o br="$1":${work_dir}/${profile}-image=ro:${work_dir}/root-image=ro none "$1"
 }
 
+mount_image_live(){
+    IMAGE_ACTIVE_MOUNTS=()
+    track_image -t aufs -o br="$1":${work_dir}/live-image=ro:${work_dir}/root-image=ro none "$1"
+}
+
 # $1: image path
 umount_image(){
     if [[ -n ${IMAGE_ACTIVE_MOUNTS[@]} ]];then
