@@ -73,7 +73,7 @@ make_sqfs() {
         error "$1 is not a directory"
         return 1
     fi
-    local timer=$(get_timer) path=${work_dir}/iso/${iso_name}/${target_arch}
+    local timer=$(get_timer) path=${iso_root}/${iso_name}/${target_arch}
     local name=${1##*/}
     local sq_img="${path}/$name.sqfs"
     mkdir -p ${path}
@@ -118,7 +118,7 @@ make_sqfs() {
 assemble_iso(){
     msg "Creating ISO image..."
     local efi_boot_args=()
-    if [[ -f "${work_dir}/iso/EFI/miso/efiboot.img" ]]; then
+    if [[ -f "${iso_root}/EFI/miso/efiboot.img" ]]; then
         msg2 "Setting efi args. El Torito detected."
         efi_boot_args=("-eltorito-alt-boot"
                 "-e EFI/miso/efiboot.img"
@@ -135,19 +135,19 @@ assemble_iso(){
         -appid "${iso_app_id}" \
         -publisher "${iso_publisher}" \
         -preparer "Prepared by manjaro-tools/${0##*/}" \
-        -eltorito-boot isolinux/isolinux.bin \
-        -eltorito-catalog isolinux/boot.cat \
+        -eltorito-boot syslinux/isolinux.bin \
+        -eltorito-catalog syslinux/boot.cat \
         -no-emul-boot -boot-load-size 4 -boot-info-table \
-        -isohybrid-mbr "${work_dir}/iso/isolinux/isohdpfx.bin" \
+        -isohybrid-mbr "${iso_root}/syslinux/isohdpfx.bin" \
         ${efi_boot_args[@]} \
         -output "${iso_dir}/${iso_file}" \
-        "${work_dir}/iso/"
+        "${iso_root}/"
 }
 
 # Build ISO
 make_iso() {
     msg "Start [Build ISO]"
-    touch "${work_dir}/iso/.miso"
+    touch "${iso_root}/.miso"
     for d in $(find "${work_dir}" -maxdepth 1 -type d -name '[^.]*'); do
         if [[ "$d" != "${work_dir}/iso" ]] && \
         [[ "${d##*/}" != "iso" ]] && \
@@ -159,7 +159,7 @@ make_iso() {
 
     msg "Making bootable image"
     # Sanity checks
-    [[ ! -d "${work_dir}/iso" ]] && return 1
+    [[ ! -d "${iso_root}" ]] && return 1
     if [[ -f "${iso_dir}/${iso_file}" ]]; then
         msg2 "Removing existing bootable image..."
         rm -rf "${iso_dir}/${iso_file}"
@@ -298,11 +298,11 @@ make_image_mhwd() {
 
 make_image_boot() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
-        msg "Prepare [%s/boot]" "${iso_name}"
-        local path_iso="${work_dir}/iso/${iso_name}/boot"
+        msg "Prepare [/iso/%s/boot]" "${iso_name}"
+        local path_iso="${iso_root}/${iso_name}/boot"
         mkdir -p ${path_iso}/${target_arch}
         cp ${work_dir}/root-image/boot/memtest86+/memtest.bin ${path_iso}/${target_arch}/memtest
-        cp ${work_dir}/root-image/boot/vmlinuz* ${path_iso}/${target_arch}/${iso_name}
+        cp ${work_dir}/root-image/boot/vmlinuz* ${path_iso}/${target_arch}/vmlinuz
         local path="${work_dir}/boot-image"
         mkdir -p ${path}
 
@@ -313,90 +313,67 @@ make_image_boot() {
 
         gen_boot_image "${path}"
 
-        mv ${path}/boot/${iso_name}.img ${path_iso}/${target_arch}/${iso_name}.img
+        mv ${path}/boot/initramfs.img ${path_iso}/${target_arch}/initramfs.img
         [[ -f ${path}/boot/intel-ucode.img ]] && copy_ucode "${path}" "${path_iso}"
 
         umount_image
 
         rm -R ${path}
         : > ${work_dir}/build.${FUNCNAME}
-        msg "Done [%s/boot]" "${iso_name}"
+        msg "Done [/iso/%s/boot]" "${iso_name}"
     fi
 }
 
 # Prepare /EFI
 make_efi_usb() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
-        msg "Prepare [%s/boot/EFI]" "${iso_name}"
-        local boot=${work_dir}/iso/EFI/boot
-        mkdir -p ${boot}
-        copy_preloader_efi "${work_dir}/live-image" "${boot}"
-        copy_loader_efi "${work_dir}/root-image" "${boot}"
-        prepare_efi_loader_conf "${work_dir}/iso/loader"
-        prepare_loader_entry "${work_dir}/iso" "usb"
-        copy_efi_shell "${work_dir}/live-image" "${work_dir}/iso/EFI"
-        copy_efi_shell_conf "${work_dir}/live-image" "${work_dir}/iso/loader/entries"
+        msg "Prepare [/iso/EFI]"
+        prepare_efi_loader  "${work_dir}/live-image" "${iso_root}" "usb"
         : > ${work_dir}/build.${FUNCNAME}
-        msg "Done [%s/boot/EFI]" "${iso_name}"
+        msg "Done [/iso/EFI]"
     fi
 }
 
 # Prepare kernel.img::/EFI for "El Torito" EFI boot mode
 make_efi_dvd() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
-        msg "Prepare [%s/iso/EFI]" "${iso_name}"
-        local miso=${work_dir}/iso/EFI/miso
+        msg "Prepare [/efiboot/EFI]"
+        local miso=${iso_root}/EFI/miso
         mkdir -p ${miso}
         truncate -s 31M ${miso}/efiboot.img
         mkfs.fat -n MISO_EFI ${miso}/efiboot.img
         mkdir -p ${work_dir}/efiboot
         mount ${miso}/efiboot.img ${work_dir}/efiboot
-        mkdir -p ${work_dir}/efiboot/EFI/{miso,boot}
-        copy_boot_images "${work_dir}"
-        local boot=${work_dir}/efiboot/EFI/boot
-        copy_preloader_efi "${work_dir}/live-image" "${boot}"
-        copy_loader_efi "${work_dir}/root-image" "${boot}"
-        prepare_efi_loader_conf "${work_dir}/efiboot/loader"
-        prepare_loader_entry "${work_dir}/efiboot" "dvd"
-        copy_efi_shell "${work_dir}/live-image" "${work_dir}/efiboot/EFI"
-        copy_efi_shell_conf "${work_dir}/live-image" "${work_dir}/efiboot/loader/entries"
+
+        prepare_efiboot_image "${work_dir}" "${iso_root}"
+
+        prepare_efi_loader "${work_dir}/live-image" "${work_dir}/efiboot" "dvd"
         umount -d ${work_dir}/efiboot
         : > ${work_dir}/build.${FUNCNAME}
-        msg "Done [%s/iso/EFI]" "${iso_name}"
+        msg "Done [/efiboot/EFI]"
     fi
 }
 
 make_syslinux() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
-        msg "Prepare [%s/iso/syslinux]" "${iso_name}"
-        local path=${work_dir}/iso/${iso_name}/boot/syslinux
-        mkdir -p ${path}
-        prepare_syslinux "${work_dir}/live-image" "${path}"
-        mkdir -p ${path}/hdt
-        gzip -c -9 ${work_dir}/root-image/usr/share/hwdata/pci.ids > ${path}/hdt/pciids.gz
-        gzip -c -9 ${work_dir}/live-image/usr/lib/modules/*-MANJARO/modules.alias > ${path}/hdt/modalias.gz
+        msg "Prepare [/iso/syslinux]"
+        local syslinux=${iso_root}/syslinux
+        mkdir -p ${syslinux}
+        prepare_syslinux "${syslinux}"
+        mkdir -p ${syslinux}/hdt
+        gzip -c -9 ${work_dir}/root-image/usr/share/hwdata/pci.ids > ${syslinux}/hdt/pciids.gz
+        gzip -c -9 ${work_dir}/live-image/usr/lib/modules/*-MANJARO/modules.alias > ${syslinux}/hdt/modalias.gz
         : > ${work_dir}/build.${FUNCNAME}
-        msg "Done [%s/iso/syslinux]" "${iso_name}"
-    fi
-}
-
-# Prepare /isolinux
-make_isolinux() {
-    if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
-        msg "Prepare [%s/iso/isolinux]" "${iso_name}"
-        mkdir -p ${work_dir}/iso/isolinux
-        prepare_isolinux "${work_dir}/live-image" "${work_dir}/iso/isolinux"
-        : > ${work_dir}/build.${FUNCNAME}
-        msg "Done [%s/iso/isolinux]" "${iso_name}"
+        msg "Done [/iso/syslinux]"
     fi
 }
 
 make_isomounts() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
-        msg "Prepare [isomounts]"
-        write_isomounts "${work_dir}/iso/${iso_name}"
+        msg "Prepare [/iso/%s/isomounts]" "${iso_name}"
+        write_isomounts "${iso_root}/${iso_name}"
         : > ${work_dir}/build.${FUNCNAME}
-        msg "Done [isomounts]"
+        msg "Done [/iso/%s/isomounts]" "${iso_name}"
     fi
 }
 
@@ -475,12 +452,11 @@ prepare_images(){
         run_safe "make_image_mhwd"
     fi
     run_safe "make_image_boot"
+    run_safe "make_syslinux"
     if [[ "${target_arch}" == "x86_64" ]]; then
         run_safe "make_efi_usb"
         run_safe "make_efi_dvd"
     fi
-    run_safe "make_syslinux"
-    run_safe "make_isolinux"
     run_safe "make_isomounts"
     show_elapsed_time "${FUNCNAME}" "${timer}"
 }
@@ -496,7 +472,7 @@ archive_logs(){
 
 make_profile(){
     msg "Start building [%s]" "${profile}"
-    ${clean_first} && chroot_clean "${work_dir}"
+    ${clean_first} && chroot_clean "${work_dir}" "${iso_root}"
     if ${iso_only}; then
         [[ ! -d ${work_dir} ]] && die "Create images: buildiso -p %s -x" "${profile}"
         compress_images
@@ -561,6 +537,8 @@ load_profile(){
     work_dir=${chroots_iso}/${profile}/${target_arch}
 
     iso_dir="${cache_dir_iso}/${edition}/${dist_release}/${profile}"
+
+    iso_root=${chroots_iso}/${profile}/iso
 
     prepare_dir "${iso_dir}"
     user_own "${iso_dir}"

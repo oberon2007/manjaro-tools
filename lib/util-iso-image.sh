@@ -253,6 +253,8 @@ chroot_clean(){
     done
     exec 9>&-
     rm -rf --one-file-system "$1"
+    msg2 "Deleting iso root [%s] ..." "$2"
+    rm -rf --one-file-system "$2"
 }
 
 clean_up_image(){

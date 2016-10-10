@@ -24,6 +24,7 @@ show_profile(){
     msg2 "pacman_conf: %s" "${pacman_conf}"
     if ${verbose};then
         msg2 "work_dir: %s" "${work_dir}"
+        msg2 "iso_root: %s" "${iso_root}"
         msg2 "iso_dir: %s" "${iso_dir}"
         msg2 "iso_file: %s" "${iso_file}"
         msg2 "autologin: %s" "${autologin}"
