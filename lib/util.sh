@@ -93,12 +93,12 @@ show_build_lists(){
 
 # $1: make_conf_dir
 show_build_profiles(){
-    local arch temp
+    local cpuarch temp
     for item in $(ls $1/*.conf); do
         temp=${item##*/}
-        arch=${arch:-}${arch:+|}${temp%.conf}
+        cpuarch=${cpuarch:-}${cpuarch:+|}${temp%.conf}
     done
-    echo $arch
+    echo $cpuarch
 }
 
 # $1: list_dir
@@ -301,9 +301,9 @@ init_buildiso(){
 
     [[ -z ${iso_app_id} ]] && iso_app_id='Manjaro Linux Live/Rescue CD'
 
-    [[ -z ${iso_compression} ]] && iso_compression='xz'
+    [[ -z ${sfs_compress} ]] && sfs_compress='xz'
 
-    [[ -z ${iso_checksum} ]] && iso_checksum='md5'
+    [[ -z ${sfs_checksum} ]] && sfs_checksum='md5'
 
     [[ -z ${initsys} ]] && initsys="systemd"
 
@@ -576,7 +576,7 @@ load_pkgs(){
             _init_rm="s|>openrc.*||g"
         ;;
     esac
-    
+
     local _multi _nonfree_default _nonfree_multi _arch _arch_rm _nonfree_i686 _nonfree_x86_64
     case "${target_arch}" in
         "i686")
@@ -623,19 +623,19 @@ load_pkgs(){
             fi
         ;;
     esac
-    
+
     local _edition _edition_rm
     case "${edition}" in
-        'sonar') 
+        'sonar')
             _edition="s|>sonar||g"
             _edition_rm="s|>manjaro.*||g"
         ;;
-        *) 
+        *)
             _edition="s|>manjaro||g"
             _edition_rm="s|>sonar.*||g"
         ;;
     esac
-    
+
     local _blacklist="s|>blacklist.*||g" \
         _kernel="s|KERNEL|$kernel|g" \
         _used_kernel=${kernel:5:2} \

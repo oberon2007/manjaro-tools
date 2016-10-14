@@ -12,20 +12,21 @@
 set_mkinicpio_hooks(){
     if ! ${pxe_boot};then
         msg2 "Removing pxe hooks"
-        sed -e 's/miso_pxe_common miso_pxe_http //' \
+        sed -e 's/miso_pxe_common miso_pxe_http miso_pxe_nbd miso_pxe_nfs //' \
         -e 's/memdisk //' -i $1
     fi
     if ! ${plymouth_boot};then
         msg2 "Removing plymouth hook"
         sed -e 's/plymouth //' -i $1
     fi
-    if ${use_overlayfs};then
-        sed -e 's/miso /miso_overlayfs /' -i $1
+    if ! ${use_overlayfs};then
+        sed -e 's/miso /miso_aufs /' -i $1
     fi
 }
 
 gen_boot_args(){
-    local args=(quiet)
+#     local args=(quiet)
+    local args=()
     if ${plymouth_boot};then
         args+=(splash)
     fi
@@ -36,13 +37,16 @@ set_silent_switch_root(){
     sed -e 's|"$@"|"$@" >/dev/null 2>&1|' -i $1/usr/lib/initcpio/init
 }
 
-copy_initcpio(){
+# $1: ${profile_dir}
+# $2: ${work_dir}/bootfs
+prepare_initcpio(){
     msg2 "Copying initcpio ..."
     cp /usr/lib/initcpio/hooks/miso* $2/usr/lib/initcpio/hooks
     cp /usr/lib/initcpio/install/miso* $2/usr/lib/initcpio/install
+    cp /usr/lib/initcpio/miso_shutdown $2/usr/lib/initcpio
     cp $1/mkinitcpio.conf $2/etc/mkinitcpio-${iso_name}.conf
     set_mkinicpio_hooks "$2/etc/mkinitcpio-${iso_name}.conf"
-    set_silent_switch_root "$2"
+#     set_silent_switch_root "$2"
 }
 
 # $1: work_dir
@@ -54,13 +58,15 @@ gen_boot_image(){
         -g /boot/initramfs.img
 }
 
-copy_ucode(){
+copy_boot_extra(){
     cp $1/boot/intel-ucode.img $2/intel_ucode.img
     cp $1/usr/share/licenses/intel-ucode/LICENSE $2/intel_ucode.LICENSE
+    cp $1/boot/memtest86+/memtest.bin $2/memtest
+    cp $1/usr/share/licenses/common/GPL2/license.txt $2/memtest.COPYING
 }
 
 prepare_efiboot_image(){
-    local efi=$1/efiboot/EFI/miso boot=$2/${iso_name}/boot
+    local efi=$1/EFI/miso boot=$2/${iso_name}/boot
     prepare_dir "${efi}"
     cp ${boot}/x86_64/vmlinuz ${efi}/vmlinuz.efi
     cp ${boot}/x86_64/initramfs.img ${efi}/initramfs.img
@@ -81,7 +87,7 @@ vars_to_boot_conf(){
 }
 
 prepare_efi_loader(){
-    local efi_data=$1${DATADIR}/efiboot efi=$2/EFI/boot
+    local efi_data=$1/usr/share/efi-utils efi=$2/EFI/boot
     msg2 "Preparing efi loaders ..."
     prepare_dir "${efi}"
     cp $1/usr/share/efitools/efi/PreLoader.efi ${efi}/bootx64.efi
@@ -114,34 +120,26 @@ check_syslinux_optional(){
     sed -e "/nonfree/ d" -i $1/syslinux.msg
 }
 
+prepare_isolinux(){
+    local syslinux=$1/usr/lib/syslinux/bios
+    msg2 "Copying isolinux binaries ..."
+    cp ${syslinux}/{{isolinux,isohdpfx}.bin,ldlinux.c32} $2
+    msg2 "Copying isolinux.cfg ..."
+    cp $1/usr/share/syslinux/isolinux/isolinux.cfg $2
+    vars_to_boot_conf "$2/isolinux.cfg"
+}
+
 prepare_syslinux(){
-    local syslinux=/usr/lib/syslinux/bios
+    local syslinux=$1/usr/lib/syslinux/bios
     msg2 "Copying syslinux binaries ..."
-    cp ${syslinux}/{*.c32,lpxelinux.0,memdisk,{isolinux,isohdpfx}.bin} $1
+    cp ${syslinux}/{*.c32,lpxelinux.0,memdisk} $2
     msg2 "Copying syslinux theme ..."
-    cp ${DATADIR}/syslinux-theme/* $1
-    for conf in $1/*.cfg; do
+    syslinux=$1/usr/share/syslinux/theme
+    cp ${syslinux}/* $2
+    for conf in $2/*.cfg; do
         vars_to_boot_conf "${conf}"
     done
     if ! ${nonfree_mhwd};then
-        check_syslinux_optional "$1"
+        check_syslinux_optional "$2"
     fi
-}
-
-write_isomounts(){
-    local file=$1/isomounts
-    echo '# syntax: <img> <arch> <mount point> <type> <kernel argument>' > ${file}
-    echo '' >> ${file}
-    msg2 "Writing live entry ..."
-    echo "${target_arch}/live-image.sqfs ${target_arch} / squashfs" >> ${file}
-    if [[ -f ${packages_mhwd} ]] ; then
-        msg2 "Writing mhwd entry ..."
-        echo "${target_arch}/mhwd-image.sqfs ${target_arch} / squashfs" >> ${file}
-    fi
-    if [[ -f "${packages_custom}" ]] ; then
-        msg2 "Writing %s entry ..." "${profile}"
-        echo "${target_arch}/${profile}-image.sqfs ${target_arch} / squashfs" >> ${file}
-    fi
-    msg2 "Writing root entry ..."
-    echo "${target_arch}/root-image.sqfs ${target_arch} / squashfs" >> ${file}
 }

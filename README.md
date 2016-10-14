@@ -114,10 +114,10 @@ overriding
 
 # compression used, possible values xz (default, best compression), gzip, lzma, lzo, lz4
 # lz4 is faster but worst compression, may be useful for locally testing isos
-# iso_compression=xz
+# sfs_compress=xz
 
 # valid: md5, sha1, sha256, sha384, sha512
-# iso_checksum=md5
+# sfs_checksum=md5
 
 # possible values: openrc,systemd
 # initsys="systemd"

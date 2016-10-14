@@ -36,17 +36,23 @@ _mnt_dmsnapshot() {
     echo $(readlink -f /dev/mapper/${dm_snap_name}) >> /run/miso/used_block_devices
 }
 
+_mnt_overlayfs_root(){
+    local src="${1}"
+    local newroot="${2}"
+    local mnt="${3}"
+
+    msg ":: Mounting root (aufs) filesystem"
+    mount -t aufs -o dirs=${src}=rw union "${newroot}${mnt}"
+}
+
 # args: source, newroot, mountpoint
 _mnt_overlayfs() {
     local src="${1}"
     local newroot="${2}"
     local mnt="${3}"
-    local work_dir="/run/miso/cowspace/work"
-    local upper_dir="/run/miso/cowspace/upper"
 
-    mkdir -p "${upper_dir}" "${work_dir}"
-
-    mount -t overlay overlay -o lowerdir="${src}",upperdir="${upper_dir}",workdir="${work_dir}" "${newroot}${mnt}"
+    msg ":: Adding new aufs branch: ${src} to ${newroot}${mnt}"
+    mount -t aufs -o remount,append:"${src}"=ro none "${newroot}${mnt}"
 }
 
 # args: /path/to/image_file, mountpoint
@@ -119,8 +125,7 @@ _verify_signature() {
 run_hook() {
     [[ -z "${arch}" ]] && arch="$(uname -m)"
     [[ -z "${copytoram_size}" ]] && copytoram_size="75%"
-    [[ -z "${misobasedir}" ]] && misobasedir="manjaro"
-
+    [[ -z "${misobasedir}" ]] && misobasedir="arch"
     [[ -z "${dm_snap_prefix}" ]] && dm_snap_prefix="arch"
     [[ -z "${misodevice}" ]] && misodevice="/dev/disk/by-label/${misolabel}"
     [[ -z "${cow_spacesize}" ]] && cow_spacesize="256M"
@@ -207,24 +212,24 @@ miso_mount_handler() {
     fi
     mkdir -p -m 0700 "/run/miso/cowspace/${cow_directory}"
 
+    local work_dir="/run/miso/cowspace"
+    _mnt_overlayfs_root "${work_dir}" "${newroot}" "/"
+
     local src="/run/miso/bootmnt/${misobasedir}/${arch}"
     local dest_sfs="/run/miso/sfs" dest_img="/run/miso/img"
-    local lower_dir
     mkdir -p ${dest_img}
 
     for sfs in livefs mhwdfs desktopfs rootfs;do
         if [[ -f "${src}/${sfs}.sfs" ]]; then
             _mnt_sfs "${src}/${sfs}.sfs" "${dest_sfs}/${sfs}"
             if [[ -f "${dest_sfs}/${sfs}/${sfs}.img" ]]; then
-                lower_dir=${lower_dir:-}${lower_dir:+:}"${dest_img}/${sfs}"
                 _mnt_dmsnapshot "${dest_sfs}/${sfs}/${sfs}.img" "${dest_img}/${sfs}"
+                _mnt_overlayfs "${dest_img}/${sfs}" "${newroot}" "/"
             else
-                lower_dir=${lower_dir:-}${lower_dir:+:}"${dest_sfs}/${sfs}"
+                _mnt_overlayfs "${dest_sfs}/${sfs}" "${newroot}" "/"
             fi
         fi
     done
-
-    _mnt_overlayfs "${lower_dir}" "${newroot}" "/"
 
     if [[ "${copytoram}" == "y" ]]; then
         umount -d /run/miso/bootmnt

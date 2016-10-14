@@ -127,6 +127,11 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
                 <listitem><para>Disable clean working directory step.</para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>-m</option></term>
+
+                <listitem><para>Enable persistence mode.</para></listitem>
+            </varlistentry>
 
             <varlistentry>
                 <term><option>-x</option></term>
