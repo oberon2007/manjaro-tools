@@ -161,18 +161,11 @@ write_live_session_conf(){
     echo '' >> ${conf}
     echo '# live group membership' >> ${conf}
     echo "addgroups='${addgroups}'" >> ${conf}
-    echo '' >> ${conf}
-    echo '# iso name' >> ${conf}
-    echo "iso_name=${iso_name}" >> ${conf}
-    echo '' >> ${conf}
-    echo '# default_desktop_file' >> ${conf}
-    echo "default_desktop_file=${default_desktop_file}" >> ${conf}
-    echo '' >> ${conf}
-    echo '# default_desktop_executable' >> ${conf}
-    echo "default_desktop_executable=${default_desktop_executable}" >> ${conf}
-    echo '' >> ${conf}
-    echo '# samba workgroup' >> ${conf}
-    echo "smb_workgroup=${smb_workgroup}" >> ${conf}
+    if [[ -n ${smb_workgroup} ]];then
+        echo '' >> ${conf}
+        echo '# samba workgroup' >> ${conf}
+        echo "smb_workgroup=${smb_workgroup}" >> ${conf}
+    fi
 }
 
 configure_hosts(){
@@ -201,6 +194,18 @@ configure_system(){
     esac
 }
 
+configure_live_image(){
+    msg "Configuring [livefs]"
+    configure_hosts "$1"
+    configure_lsb "$1"
+    configure_mhwd "$1"
+    configure_system "$1"
+    configure_services "$1"
+    configure_calamares "$1"
+    write_live_session_conf "$1"
+    msg "Done configuring [livefs]"
+}
+
 make_repo(){
     repo-add $1${mhwd_repo}/mhwd.db.tar.gz $1${mhwd_repo}/*pkg*z
 }
@@ -227,17 +232,17 @@ copy_from_cache(){
 }
 
 chroot_create(){
-    [[ "${1##*/}" == "root-image" ]] && local flag="-L"
+    [[ "${1##*/}" == "rootfs" ]] && local flag="-L"
     setarch "${target_arch}" \
         mkchroot ${mkchroot_args[*]} ${flag} $@
 }
 
 chroot_clean(){
     msg "Cleaning up ..."
-    for image in "$1"/*-image; do
+    for image in "$1"/*fs; do
         [[ -d ${image} ]] || continue
         local name=${image##*/}
-        if [[ $name != "mhwd-image" ]];then
+        if [[ $name != "mhwdfs" ]];then
             msg2 "Deleting chroot [%s] ..." "$name"
             lock 9 "${image}.lock" "Locking chroot '${image}'"
             if [[ "$(stat -f -c %T "${image}")" == btrfs ]]; then
@@ -248,13 +253,15 @@ chroot_clean(){
     done
     exec 9>&-
     rm -rf --one-file-system "$1"
+    msg2 "Deleting isoroot [%s] ..." "${2##*/}"
+    rm -rf --one-file-system "$2"
 }
 
 clean_up_image(){
     msg2 "Cleaning [%s]" "${1##*/}"
 
     local path
-    if [[ ${1##*/} == 'mhwd-image' ]];then
+    if [[ ${1##*/} == 'mhwdfs' ]];then
         path=$1/var
         if [[ -d $path ]];then
             find "$path" -mindepth 0 -delete &> /dev/null
@@ -291,5 +298,5 @@ clean_up_image(){
             find "$path" -mindepth 1 -delete &> /dev/null
         fi
     fi
-# 	find "${work_dir}" -name *.pacnew -name *.pacsave -name *.pacorig -delete
+	find "$1" -name *.pacnew -name *.pacsave -name *.pacorig -delete
 }

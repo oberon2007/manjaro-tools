@@ -93,12 +93,12 @@ show_build_lists(){
 
 # $1: make_conf_dir
 show_build_profiles(){
-    local arch temp
+    local cpuarch temp
     for item in $(ls $1/*.conf); do
         temp=${item##*/}
-        arch=${arch:-}${arch:+|}${temp%.conf}
+        cpuarch=${cpuarch:-}${cpuarch:+|}${temp%.conf}
     done
-    echo $arch
+    echo $cpuarch
 }
 
 # $1: list_dir
@@ -301,9 +301,9 @@ init_buildiso(){
 
     [[ -z ${iso_app_id} ]] && iso_app_id='Manjaro Linux Live/Rescue CD'
 
-    [[ -z ${iso_compression} ]] && iso_compression='xz'
+    [[ -z ${sfs_compress} ]] && sfs_compress='xz'
 
-    [[ -z ${iso_checksum} ]] && iso_checksum='md5'
+    [[ -z ${sfs_checksum} ]] && sfs_checksum='md5'
 
     [[ -z ${initsys} ]] && initsys="systemd"
 
@@ -372,8 +372,11 @@ check_profile_vars(){
     if ! is_valid_bool "${netinstall}";then
         die "netinstall only accepts true/false value!"
     fi
-    if ! is_valid_bool "${unpackfs}";then
-        die "unpackfs only accepts true/false value!"
+    if ! is_valid_bool "${chrootcfg}";then
+        die "chrootcfg only accepts true/false value!"
+    fi
+    if ! is_valid_bool "${geoip}";then
+        die "geoip only accepts true/false value!"
     fi
 }
 
@@ -455,7 +458,7 @@ load_profile_config(){
 
     [[ -z ${netinstall} ]] && netinstall='false'
 
-    [[ -z ${unpackfs} ]] && unpackfs='true'
+    [[ -z ${chrootcfg} ]] && chrootcfg='false'
 
     [[ -z ${netgroups} ]] && netgroups="https://raw.githubusercontent.com/manjaro/manjaro-tools-iso-profiles/master/shared/netinst"
 
@@ -500,7 +503,7 @@ reset_profile(){
     unset tracker_url
     unset piece_size
     unset netinstall
-    unset unpackfs
+    unset chrootcfg
     unset netgroups
     unset geoip
 }
@@ -544,8 +547,8 @@ check_profile(){
 
     [[ -f "${profile_dir}/Packages-Mhwd" ]] && packages_mhwd=${profile_dir}/Packages-Mhwd
 
-    if ! ${netinstall} && ! ${unpackfs};then
-        unpackfs="true"
+    if ! ${netinstall}; then
+        chrootcfg="false"
     fi
 }
 
@@ -562,57 +565,77 @@ get_shared_list(){
 load_pkgs(){
     info "Loading Packages: [%s] ..." "${1##*/}"
 
-    local _init _init_rm _multi _nonfree_default _nonfree_multi _arch _arch_rm _nonfree_i686 _nonfree_x86_64
+    local _init _init_rm
+    case "${initsys}" in
+        'openrc')
+            _init="s|>openrc||g"
+            _init_rm="s|>systemd.*||g"
+        ;;
+        *)
+            _init="s|>systemd||g"
+            _init_rm="s|>openrc.*||g"
+        ;;
+    esac
 
-    if [[ ${initsys} == 'openrc' ]];then
-        _init="s|>openrc||g"
-        _init_rm="s|>systemd.*||g"
-    else
-        _init="s|>systemd||g"
-        _init_rm="s|>openrc.*||g"
-    fi
-    if [[ "${target_arch}" == "i686" ]]; then
-        _arch="s|>i686||g"
-        _arch_rm="s|>x86_64.*||g"
-        _multi="s|>multilib.*||g"
-        _nonfree_multi="s|>nonfree_multilib.*||g"
-        _nonfree_x86_64="s|>nonfree_x86_64.*||g"
-        if ${nonfree_mhwd};then
-            _nonfree_default="s|>nonfree_default||g"
-            _nonfree_i686="s|>nonfree_i686||g"
-
-        else
-            _nonfree_default="s|>nonfree_default.*||g"
-            _nonfree_i686="s|>nonfree_i686.*||g"
-        fi
-    else
-        _arch="s|>x86_64||g"
-        _arch_rm="s|>i686.*||g"
-        _nonfree_i686="s|>nonfree_i686.*||g"
-        if ${multilib};then
-            _multi="s|>multilib||g"
-            if ${nonfree_mhwd};then
-                _nonfree_default="s|>nonfree_default||g"
-                _nonfree_x86_64="s|>nonfree_x86_64||g"
-                _nonfree_multi="s|>nonfree_multilib||g"
-            else
-                _nonfree_default="s|>nonfree_default.*||g"
-                _nonfree_multi="s|>nonfree_multilib.*||g"
-                _nonfree_x86_64="s|>nonfree_x86_64.*||g"
-            fi
-        else
+    local _multi _nonfree_default _nonfree_multi _arch _arch_rm _nonfree_i686 _nonfree_x86_64
+    case "${target_arch}" in
+        "i686")
+            _arch="s|>i686||g"
+            _arch_rm="s|>x86_64.*||g"
             _multi="s|>multilib.*||g"
+            _nonfree_multi="s|>nonfree_multilib.*||g"
+            _nonfree_x86_64="s|>nonfree_x86_64.*||g"
             if ${nonfree_mhwd};then
                 _nonfree_default="s|>nonfree_default||g"
-                _nonfree_x86_64="s|>nonfree_x86_64||g"
-                _nonfree_multi="s|>nonfree_multilib.*||g"
+                _nonfree_i686="s|>nonfree_i686||g"
+
             else
                 _nonfree_default="s|>nonfree_default.*||g"
-                _nonfree_x86_64="s|>nonfree_x86_64.*||g"
-                _nonfree_multi="s|>nonfree_multilib.*||g"
+                _nonfree_i686="s|>nonfree_i686.*||g"
             fi
-        fi
-    fi
+        ;;
+        *)
+            _arch="s|>x86_64||g"
+            _arch_rm="s|>i686.*||g"
+            _nonfree_i686="s|>nonfree_i686.*||g"
+            if ${multilib};then
+                _multi="s|>multilib||g"
+                if ${nonfree_mhwd};then
+                    _nonfree_default="s|>nonfree_default||g"
+                    _nonfree_x86_64="s|>nonfree_x86_64||g"
+                    _nonfree_multi="s|>nonfree_multilib||g"
+                else
+                    _nonfree_default="s|>nonfree_default.*||g"
+                    _nonfree_multi="s|>nonfree_multilib.*||g"
+                    _nonfree_x86_64="s|>nonfree_x86_64.*||g"
+                fi
+            else
+                _multi="s|>multilib.*||g"
+                if ${nonfree_mhwd};then
+                    _nonfree_default="s|>nonfree_default||g"
+                    _nonfree_x86_64="s|>nonfree_x86_64||g"
+                    _nonfree_multi="s|>nonfree_multilib.*||g"
+                else
+                    _nonfree_default="s|>nonfree_default.*||g"
+                    _nonfree_x86_64="s|>nonfree_x86_64.*||g"
+                    _nonfree_multi="s|>nonfree_multilib.*||g"
+                fi
+            fi
+        ;;
+    esac
+
+    local _edition _edition_rm
+    case "${edition}" in
+        'sonar')
+            _edition="s|>sonar||g"
+            _edition_rm="s|>manjaro.*||g"
+        ;;
+        *)
+            _edition="s|>manjaro||g"
+            _edition_rm="s|>sonar.*||g"
+        ;;
+    esac
+
     local _blacklist="s|>blacklist.*||g" \
         _kernel="s|KERNEL|$kernel|g" \
         _used_kernel=${kernel:5:2} \
@@ -643,6 +666,8 @@ load_pkgs(){
             | sed "$_nonfree_x86_64" \
             | sed "$_nonfree_multi" \
             | sed "$_kernel" \
+            | sed "$_edition" \
+            | sed "$_edition_rm" \
             | sed "$_clean")
 
     if [[ $1 == "${packages_mhwd}" ]]; then

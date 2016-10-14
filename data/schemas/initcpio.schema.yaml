@@ -1,4 +1,0 @@
----
-type: map
-mapping:
-  kernel: { type: str, required: true }

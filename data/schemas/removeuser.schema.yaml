@@ -1,4 +1,0 @@
----
-type: map
-mapping:
-    "username": { type: str, required: true }

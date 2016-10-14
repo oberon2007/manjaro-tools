@@ -24,6 +24,7 @@ show_profile(){
     msg2 "pacman_conf: %s" "${pacman_conf}"
     if ${verbose};then
         msg2 "work_dir: %s" "${work_dir}"
+        msg2 "iso_root: %s" "${iso_root}"
         msg2 "iso_dir: %s" "${iso_dir}"
         msg2 "iso_file: %s" "${iso_file}"
         msg2 "autologin: %s" "${autologin}"
@@ -35,8 +36,8 @@ show_profile(){
         [[ ${target_arch} == 'x86_64' ]] && msg2 "multilib: %s" "${multilib}"
 
         msg2 "netinstall: %s" "${netinstall}"
+        msg2 "chrootcfg: %s" "${chrootcfg}"
         ${netinstall} && msg2 "netgroups: %s" "$(get_yaml)"
-        msg2 "unpackfs: %s" "${unpackfs}"
         msg2 "geoip: %s" "${geoip}"
 
         msg2 "efi_boot_loader: %s" "${efi_boot_loader}"
@@ -88,6 +89,7 @@ display_settings(){
     msg2 "clean_first: %s" "${clean_first}"
     msg2 "images_only: %s" "${images_only}"
     msg2 "iso_only: %s" "${iso_only}"
+    msg2 "persist: %s" "${persist}"
     msg2 "sign: %s" "${sign}"
     msg2 "torrent: %s" "${torrent}"
 
@@ -100,8 +102,8 @@ display_settings(){
     msg2 "iso_label: %s" "${iso_label}"
     msg2 "iso_publisher: %s" "${iso_publisher}"
     msg2 "iso_app_id: %s" "${iso_app_id}"
-    msg2 "iso_compression: %s" "${iso_compression}"
-    msg2 "iso_checksum: %s" "${iso_checksum}"
+    msg2 "sfs_compress: %s" "${sfs_compress}"
+    msg2 "sfs_checksum: %s" "${sfs_checksum}"
     msg2 "use_overlayfs: %s" "${use_overlayfs}"
     ${verbose} && msg2 "iso_fs: %s" "${iso_fs}"
 
@@ -125,6 +127,7 @@ iso_only=false
 verbose=false
 sign=false
 torrent=false
+persist=false
 
 usage() {
     echo "Usage: ${0##*/} [options]"
@@ -139,6 +142,7 @@ usage() {
     echo "                       [default: ${kernel}]"
     echo '    -i <name>          Init system to use'
     echo "                       [default: ${initsys}]"
+    echo '    -m                 Set SquashFS image mode to persistence'
     echo '    -s                 Sign the iso'
     echo '    -c                 Disable clean work dir'
     echo '    -x                 Build images only'
@@ -155,7 +159,7 @@ usage() {
 
 orig_argv=("$@")
 
-opts='p:a:b:r:t:k:i:czxswvqh'
+opts='p:a:b:r:t:k:i:czxsmwvqh'
 
 while getopts "${opts}" arg; do
     case "${arg}" in
@@ -170,6 +174,7 @@ while getopts "${opts}" arg; do
         c) clean_first=false ;;
         x) images_only=true ;;
         z) iso_only=true ;;
+        m) persist=true ;;
         w) torrent=true ;;
         v) verbose=true ;;
         q) pretend=true ;;

@@ -1,4 +1,4 @@
-Version=0.13.8
+Version=0.14.0
 
 PREFIX = /usr/local
 SYSCONFDIR = /etc
@@ -80,18 +80,27 @@ SHARED_ISO = \
 
 CPIOHOOKS = \
 	initcpio/hooks/miso \
-	initcpio/hooks/miso_overlayfs \
+	initcpio/hooks/miso_aufs \
 	initcpio/hooks/miso_loop_mnt \
 	initcpio/hooks/miso_pxe_common \
-	initcpio/hooks/miso_pxe_http
+	initcpio/hooks/miso_pxe_http \
+	initcpio/hooks/miso_pxe_nbd \
+	initcpio/hooks/miso_pxe_nfs \
+	initcpio/hooks/miso_shutdown
 
 CPIOINST = \
-	initcpio/inst/miso \
-	initcpio/inst/miso_overlayfs \
-	initcpio/inst/miso_loop_mnt \
-	initcpio/inst/miso_pxe_common \
-	initcpio/inst/miso_pxe_http \
-	initcpio/inst/miso_kms
+	initcpio/install/miso \
+	initcpio/install/miso_aufs \
+	initcpio/install/miso_loop_mnt \
+	initcpio/install/miso_pxe_common \
+	initcpio/install/miso_pxe_http \
+	initcpio/install/miso_pxe_nbd \
+	initcpio/install/miso_pxe_nfs \
+	initcpio/install/miso_kms \
+	initcpio/install/miso_shutdown
+
+CPIO = \
+	initcpio/script/miso_shutdown
 
 MAN_XML = \
 	buildpkg.xml \
@@ -109,38 +118,7 @@ LIBS_YAML = \
 	lib/util-yaml.sh
 
 SHARED_YAML = \
-	data/desktop.map \
 	data/linux.preset
-
-SCHEMAS = \
-	data/schemas/bootloader.schema.yaml \
-	data/schemas/chrootcfg.schema.yaml \
-	data/schemas/displaymanager.schema.yaml \
-	data/schemas/finished.schema.yaml \
-	data/schemas/fstab.schema.yaml \
-	data/schemas/grubcfg.schema.yaml \
-	data/schemas/initcpio.schema.yaml \
-	data/schemas/keyboard.schema.yaml \
-	data/schemas/license.schema.yaml \
-	data/schemas/locale.schema.yaml \
-	data/schemas/luksopenswaphookcfg.schema.yaml \
-	data/schemas/machineid.schema.yaml \
-	data/schemas/mhwdcfg.schema.yaml \
-	data/schemas/mount.schema.yaml \
-	data/schemas/netgroups.schema.yaml \
-	data/schemas/netinstall.schema.yaml \
-	data/schemas/packages.schema.yaml \
-	data/schemas/partition.schema.yaml \
-	data/schemas/plymouthcfg.schema.yaml \
-	data/schemas/postcfg.schema.yaml \
-	data/schemas/removeuser.schema.yaml \
-	data/schemas/services.schema.yaml \
-	data/schemas/servicescfg.schema.yaml \
-	data/schemas/settings.schema.yaml \
-	data/schemas/umount.schema.yaml \
-	data/schemas/unpackfs.schema.yaml \
-	data/schemas/users.schema.yaml \
-	data/schemas/welcome.schema.yaml
 
 all: $(BIN_BASE) $(BIN_PKG) $(BIN_ISO) $(BIN_YAML) doc
 
@@ -215,6 +193,8 @@ install_iso:
 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/initcpio/install
 	install -m0755 ${CPIOINST} $(DESTDIR)$(PREFIX)/lib/initcpio/install
 
+	install -m0755 ${CPIO} $(DESTDIR)$(PREFIX)/lib/initcpio
+
 	install -dm0755 $(DESTDIR)$(PREFIX)/share/manjaro-tools
 	install -m0644 ${SHARED_ISO} $(DESTDIR)$(PREFIX)/share/manjaro-tools
 
@@ -235,9 +215,6 @@ install_yaml:
 
 	install -dm0755 $(DESTDIR)$(PREFIX)/share/manjaro-tools
 	install -m0644 ${SHARED_YAML} $(DESTDIR)$(PREFIX)/share/manjaro-tools
-
-	install -dm0755 $(DESTDIR)$(PREFIX)/share/manjaro-tools/schemas
-	install -m0644 ${SCHEMAS} $(DESTDIR)$(PREFIX)/share/manjaro-tools/schemas
 
 	install -dm0755 $(DESTDIR)$(PREFIX)/share/man/man1
 	gzip -c man/check-yaml.1 > $(DESTDIR)$(PREFIX)/share/man/man1/check-yaml.1.gz
@@ -266,6 +243,7 @@ uninstall_iso:
 	for f in ${LIBS_ISO}; do rm -f $(DESTDIR)$(PREFIX)/lib/manjaro-tools/$$f; done
 	for f in ${CPIOHOOKS}; do rm -f $(DESTDIR)$(PREFIX)/lib/initcpio/hooks/$$f; done
 	for f in ${CPIOINST}; do rm -f $(DESTDIR)$(PREFIX)/lib/initcpio/install/$$f; done
+	for f in ${CPIO}; do rm -f $(DESTDIR)$(PREFIX)/lib/initcpio/$$f; done
 	rm -f $(DESTDIR)$(PREFIX)/share/man/man1/buildiso.1.gz
 	rm -f $(DESTDIR)$(PREFIX)/share/man/man1/deployiso.1.gz
 	rm -f $(DESTDIR)$(PREFIX)/share/man/man5/manjaro-tools.conf.5.gz
@@ -274,7 +252,6 @@ uninstall_iso:
 uninstall_yaml:
 	for f in ${BIN_YAML}; do rm -f $(DESTDIR)$(PREFIX)/bin/$$f; done
 	for f in ${LIBS_YAML}; do rm -f $(DESTDIR)$(PREFIX)/lib/manjaro-tools/$$f; done
-	for f in ${SCHEMAS}; do rm -f $(DESTDIR)$(PREFIX)/share/manjaro-tools/schemas/$$f; done
 	for f in ${SHARED_YAML}; do rm -f $(DESTDIR)$(PREFIX)/share/manjaro-tools/$$f; done
 	rm -f $(DESTDIR)$(PREFIX)/share/man/man1/check-yaml.1.gz
 

@@ -17,12 +17,17 @@ track_image() {
 # $1: new branch
 mount_image(){
     IMAGE_ACTIVE_MOUNTS=()
-    track_image -t aufs -o br="$1":${work_dir}/root-image=ro none "$1"
+    track_image -t aufs -o br="$1":${work_dir}/rootfs=ro none "$1"
 }
 
 mount_image_custom(){
     IMAGE_ACTIVE_MOUNTS=()
-    track_image -t aufs -o br="$1":${work_dir}/${profile}-image=ro:${work_dir}/root-image=ro none "$1"
+    track_image -t aufs -o br="$1":${work_dir}/desktopfs=ro:${work_dir}/rootfs=ro none "$1"
+}
+
+mount_image_live(){
+    IMAGE_ACTIVE_MOUNTS=()
+    track_image -t aufs -o br="$1":${work_dir}/livefs=ro:${work_dir}/rootfs=ro none "$1"
 }
 
 # $1: image path

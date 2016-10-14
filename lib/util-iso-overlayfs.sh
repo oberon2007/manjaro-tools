@@ -17,14 +17,20 @@ track_image() {
 # $1: new branch
 mount_image(){
     IMAGE_ACTIVE_MOUNTS=()
-    mkdir -p "${work_dir}/work"
-    track_image -t overlay overlay -olowerdir="${work_dir}/root-image",upperdir="$1",workdir="${work_dir}/work" "$1"
+    mkdir -p "${mnt_dir}/work"
+    track_image -t overlay overlay -olowerdir="${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
 }
 
 mount_image_custom(){
     IMAGE_ACTIVE_MOUNTS=()
-    mkdir -p "${work_dir}/work"
-    track_image -t overlay overlay -olowerdir="${work_dir}/${profile}-image":"${work_dir}/root-image",upperdir="$1",workdir="${work_dir}/work" "$1"
+    mkdir -p "${mnt_dir}/work"
+    track_image -t overlay overlay -olowerdir="${work_dir}/desktopfs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
+}
+
+mount_image_live(){
+    IMAGE_ACTIVE_MOUNTS=()
+    mkdir -p "${mnt_dir}/work"
+    track_image -t overlay overlay -olowerdir="${work_dir}/livefs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
 }
 
 umount_image(){
@@ -32,6 +38,6 @@ umount_image(){
         info "%s umount: [%s]" "${iso_fs}" "${IMAGE_ACTIVE_MOUNTS[@]}"
         umount "${IMAGE_ACTIVE_MOUNTS[@]}"
         unset IMAGE_ACTIVE_MOUNTS
-        rm -rf "${work_dir}/work"
+        rm -rf "${mnt_dir}/work"
     fi
 }
