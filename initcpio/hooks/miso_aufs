@@ -129,6 +129,7 @@ run_hook() {
     [[ -z "${dm_snap_prefix}" ]] && dm_snap_prefix="arch"
     [[ -z "${misodevice}" ]] && misodevice="/dev/disk/by-label/${misolabel}"
     [[ -z "${cow_spacesize}" ]] && cow_spacesize="256M"
+    [[ -z "${overlay_root_size}" ]] && overlay_root_size="75%"
 
     if [[ -n "${cow_label}" ]]; then
         cow_device="/dev/disk/by-label/${cow_label}"
@@ -212,17 +213,21 @@ miso_mount_handler() {
     fi
     mkdir -p -m 0700 "/run/miso/cowspace/${cow_directory}"
 
-    local work_dir="/run/miso/cowspace"
+    msg -n ":: Mounting overlay root (tmpfs) filesystem, size=${overlay_root_size}..."
+    mkdir -p /run/miso/overlay_root
+    mount -t tmpfs -o "size=${overlay_root_size}",mode=0755 overlay_root /run/miso/overlay_root
+
+    local work_dir="/run/miso/overlay_root"
     _mnt_overlayfs_root "${work_dir}" "${newroot}" "/"
 
     local src="/run/miso/bootmnt/${misobasedir}/${arch}"
     local dest_sfs="/run/miso/sfs" dest_img="/run/miso/img"
-    mkdir -p ${dest_img}
 
     for sfs in livefs mhwdfs desktopfs rootfs;do
         if [[ -f "${src}/${sfs}.sfs" ]]; then
             _mnt_sfs "${src}/${sfs}.sfs" "${dest_sfs}/${sfs}"
             if [[ -f "${dest_sfs}/${sfs}/${sfs}.img" ]]; then
+                mkdir -p ${dest_img}
                 _mnt_dmsnapshot "${dest_sfs}/${sfs}/${sfs}.img" "${dest_img}/${sfs}"
                 _mnt_overlayfs "${dest_img}/${sfs}" "${newroot}" "/"
             else

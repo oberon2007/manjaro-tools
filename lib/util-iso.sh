@@ -238,6 +238,8 @@ make_image_root() {
         pacman -Qr "${path}" > "${path}/rootfs-pkgs.txt"
         copy_overlay "${profile_dir}/root-overlay" "${path}"
 
+        prepare_initcpio "${path}"
+
         reset_pac_conf "${path}"
 
         clean_up_image "${path}"
@@ -345,7 +347,7 @@ make_image_boot() {
         mount_image_live "${path}"
         configure_plymouth "${path}"
 
-        prepare_initcpio "${profile_dir}" "${path}"
+        gen_boot_initramfs "${profile_dir}" "${path}"
 
         gen_boot_image "${path}"
 

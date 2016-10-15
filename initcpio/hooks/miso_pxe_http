@@ -3,6 +3,10 @@
 run_hook() {
     if [[ -n "${ip}" && -n "${miso_http_srv}" ]]; then
 
+        # booting with http is always copy-to-ram, so set here to make sure
+        # addresses are flushed and interface is set down
+        copytoram="y"
+
         miso_http_srv=$(eval echo ${miso_http_srv})
         [[ -z "${miso_http_spc}" ]] && miso_http_spc="75%"
 

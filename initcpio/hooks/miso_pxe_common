@@ -39,10 +39,15 @@ run_hook () {
 
         # setup DNS resolver
         if [[ "${IPV4DNS0}" != "0.0.0.0" ]]; then
-            echo "nameserver ${IPV4DNS0}" > /etc/resolv.conf
+            echo "# added by miso_pxe_common hook" > /etc/resolv.conf
+            echo "nameserver ${IPV4DNS0}" >> /etc/resolv.conf
         fi
         if [[ "${IPV4DNS1}" != "0.0.0.0" ]]; then
             echo "nameserver ${IPV4DNS1}" >> /etc/resolv.conf
+        fi
+        if [[ -n "${DNSDOMAIN}" ]]; then
+            echo "search ${DNSDOMAIN}" >> /etc/resolv.conf
+            echo "domain ${DNSDOMAIN}" >> /etc/resolv.conf
         fi
     fi
 }

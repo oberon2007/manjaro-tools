@@ -33,20 +33,17 @@ gen_boot_args(){
     echo ${args[@]}
 }
 
-set_silent_switch_root(){
-    sed -e 's|"$@"|"$@" >/dev/null 2>&1|' -i $1/usr/lib/initcpio/init
-}
-
-# $1: ${profile_dir}
-# $2: ${work_dir}/bootfs
 prepare_initcpio(){
     msg2 "Copying initcpio ..."
-    cp /usr/lib/initcpio/hooks/miso* $2/usr/lib/initcpio/hooks
-    cp /usr/lib/initcpio/install/miso* $2/usr/lib/initcpio/install
-    cp /usr/lib/initcpio/miso_shutdown $2/usr/lib/initcpio
+    cp /usr/lib/initcpio/hooks/miso* $1/etc/initcpio/hooks
+    cp /usr/lib/initcpio/install/miso* $1/etc/initcpio/install
+    cp /usr/lib/initcpio/miso_shutdown $1/etc/initcpio
+    sed -e "s|/usr/lib/initcpio/|/etc/initcpio/|" -i $1/etc/initcpio/install/miso_shutdown
+}
+
+gen_boot_initramfs(){
     cp $1/mkinitcpio.conf $2/etc/mkinitcpio-${iso_name}.conf
     set_mkinicpio_hooks "$2/etc/mkinitcpio-${iso_name}.conf"
-#     set_silent_switch_root "$2"
 }
 
 # $1: work_dir
