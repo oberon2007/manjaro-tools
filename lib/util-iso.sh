@@ -67,34 +67,19 @@ trap_exit() {
     kill "-$sig" "$$"
 }
 
-mount_img() {
-    mkdir -p "$2"
-    info "mount: [%s]" "$1"
-    mount "$1" "$2"
+make_sig () {
+    msg2 "Creating signature file..."
+    cd "$1"
+    gpg --detach-sign --default-key ${gpg_key} $2.sfs
+    cd ${OLDPWD}
 }
 
-umount_img() {
-    info "umount: [%s]" "$1"
-    umount -d "$1"
-    rm -r "$1"
-}
-
-prepare_ext4_img(){
-    local size=32G
-    local src="$1"
-    local name=${src##*/}
-    local mnt="${mnt_dir}/${name}"
-    msg2 "Creating ext4 image of %s ..." "${size}"
-    truncate -s ${size} "${src}.img"
-    local ext4_args=()
-    ${verbose} && ext4_args+=(-q)
-    ext4_args+=(-O ^has_journal,^resize_inode -E lazy_itable_init=0 -m 0)
-    mkfs.ext4 ${ext4_args[@]} -F "${src}.img" &>/dev/null
-    tune2fs -c 0 -i 0 "${src}.img" &> /dev/null
-    mount_img "${work_dir}/${name}.img" "${mnt}"
-    msg2 "Copying %s ..." "${src}/"
-    cp -aT "${src}/" "${mnt}/"
-    umount_img "${mnt}"
+# $1: file
+make_checksum(){
+    msg2 "Creating md5sum ..."
+    cd $1
+    md5sum $2.sfs > $2.md5
+    cd ${OLDPWD}
 }
 
 # $1: image path
@@ -122,7 +107,22 @@ make_sfs() {
         fi
     fi
 
-    ${persist} && prepare_ext4_img "${src}"
+    if ${persist};then
+        local size=32G
+        local mnt="${mnt_dir}/${name}"
+        msg2 "Creating ext4 image of %s ..." "${size}"
+        truncate -s ${size} "${src}.img"
+        local ext4_args=()
+        ${verbose} && ext4_args+=(-q)
+        ext4_args+=(-O ^has_journal,^resize_inode -E lazy_itable_init=0 -m 0)
+        mkfs.ext4 ${ext4_args[@]} -F "${src}.img" &>/dev/null
+        tune2fs -c 0 -i 0 "${src}.img" &> /dev/null
+        mount_img "${work_dir}/${name}.img" "${mnt}"
+        msg2 "Copying %s ..." "${src}/"
+        cp -aT "${src}/" "${mnt}/"
+        umount_img "${mnt}"
+
+    fi
 
     msg2 "Creating SquashFS image, this may take some time..."
     local used_kernel=${kernel:5:1} mksfs_args=()
@@ -134,20 +134,19 @@ make_sfs() {
 
     mksfs_args+=(${sfs} -noappend)
 
-    local highcomp="-b 256K -Xbcj x86"
-    [[ "${sfs_compress}" != "xz" ]] && highcomp=""
+    local highcomp="-b 256K -Xbcj x86" comp='xz'
 
     if [[ "${name}" == "mhwdfs" && ${used_kernel} < "4" ]]; then
         mksfs_args+=(-comp lz4)
     else
-        mksfs_args+=(-comp ${sfs_compress} ${highcomp})
+        mksfs_args+=(-comp ${comp} ${highcomp})
     fi
     if ${verbose};then
         mksquashfs "${mksfs_args[@]}" >/dev/null
     else
         mksquashfs "${mksfs_args[@]}"
     fi
-
+    make_checksum "${dest}" "${name}"
     ${persist} && rm "${src}.img"
 
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
@@ -260,7 +259,7 @@ make_image_desktop() {
 
         pacman -Qr "${path}" > "${path}/desktopfs-pkgs.txt"
         cp "${path}/desktopfs-pkgs.txt" ${iso_dir}/$(gen_iso_fn)-pkgs.txt
-        [[ -e ${profile_dir}/${profile}-overlay ]] && copy_overlay "${profile_dir}/${profile}-overlay" "${path}"
+        [[ -e ${profile_dir}/desktop-overlay ]] && copy_overlay "${profile_dir}/desktop-overlay" "${path}"
 
         reset_pac_conf "${path}"
 
@@ -272,7 +271,7 @@ make_image_desktop() {
 }
 
 mount_image_select(){
-    if [[ -f "${packages_custom}" ]]; then
+    if [[ -f "${packages_desktop}" ]]; then
         mount_image_custom "$1"
     else
         mount_image "$1"
@@ -347,12 +346,20 @@ make_image_boot() {
         mount_image_live "${path}"
         configure_plymouth "${path}"
 
-        gen_boot_initramfs "${profile_dir}" "${path}"
+#         if [[ ${gpg_key} ]]; then
+#             gpg --export ${gpg_key} >${work_dir}/gpgkey
+#             exec 17<>${work_dir}/gpgkey
+#         fi
+#         MISO_GNUPG_FD=${gpg_key:+17}
 
-        gen_boot_image "${path}"
+        prepare_initramfs "${profile_dir}" "${path}"
+
+#         if [[ ${gpg_key} ]]; then
+#             exec 17<&-
+#         fi
 
         mv ${path}/boot/initramfs.img ${boot}/${target_arch}/initramfs.img
-        copy_boot_extra "${path}" "${boot}"
+        prepare_boot_extras "${path}" "${boot}"
 
         umount_image
 
@@ -372,22 +379,6 @@ make_efi_usb() {
     fi
 }
 
-prepare_fat_img(){
-    local size=31M
-    local src="$1"
-    local mnt="${mnt_dir}/efiboot"
-    local img="${src}/efiboot.img"
-    ${pxe_boot} && size=40M
-    msg2 "Creating fat image of %s ..." "${size}"
-    truncate -s ${size} "${img}"
-    mkfs.fat -n MISO_EFI "${img}" &>/dev/null
-    mkdir -p "${mnt}"
-    mount_img "${img}" "${mnt}"
-    prepare_efiboot_image "${mnt}" "${iso_root}"
-    prepare_efi_loader "${work_dir}/livefs" "${mnt}" "dvd"
-    umount_img "${mnt}"
-}
-
 # Prepare kernel.img::/EFI for "El Torito" EFI boot mode
 make_efi_dvd() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
@@ -395,7 +386,17 @@ make_efi_dvd() {
         local src="${iso_root}/EFI/miso"
         mkdir -p "${src}"
 
-        prepare_fat_img "${src}"
+        local size=31M
+        local mnt="${mnt_dir}/efiboot" img="${src}/efiboot.img"
+        ${pxe_boot} && size=40M
+        msg2 "Creating fat image of %s ..." "${size}"
+        truncate -s ${size} "${img}"
+        mkfs.fat -n MISO_EFI "${img}" &>/dev/null
+        mkdir -p "${mnt}"
+        mount_img "${img}" "${mnt}"
+        prepare_efiboot_image "${mnt}" "${iso_root}"
+        prepare_efi_loader "${work_dir}/livefs" "${mnt}" "dvd"
+        umount_img "${mnt}"
 
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [/efiboot/EFI]"
@@ -455,9 +456,6 @@ check_requirements(){
     import ${LIBDIR}/util-iso-${iso_fs}.sh
 }
 
-sign_iso(){
-    su ${OWNER} -c "signfile ${iso_dir}/$1"
-}
 
 make_torrent(){
     local fn=${iso_file}.torrent
@@ -466,32 +464,32 @@ make_torrent(){
     mktorrent ${mktorrent_args[*]} -o ${iso_dir}/${fn} ${iso_dir}/${iso_file}
 }
 
-# $1: file
-make_checksum(){
-    msg "Creating [%s] sum ..." "${sfs_checksum}"
-    cd ${iso_dir}
-    local cs=$(${sfs_checksum}sum $1)
-    msg2 "%s sum: %s" "${sfs_checksum}" "${cs##*/}"
-    echo "${cs}" > ${iso_dir}/$1.${sfs_checksum}
-    msg "Done [%s] sum" "${sfs_checksum}"
-}
-
 compress_images(){
     local timer=$(get_timer)
     run_safe "make_iso"
-    make_checksum "${iso_file}"
-    ${sign} && sign_iso "${iso_file}"
     ${torrent} && make_torrent
     user_own "${iso_dir}" "-R"
     show_elapsed_time "${FUNCNAME}" "${timer}"
 }
 
+# prepare_boot_loaders(){
+#     local timer=$(get_timer)
+#     run_safe "make_image_boot"
+#     run_safe "make_isolinux"
+#     run_safe "make_syslinux"
+#     if [[ "${target_arch}" == "x86_64" ]]; then
+#         run_safe "make_efi_usb"
+#         run_safe "make_efi_dvd"
+#     fi
+#     show_elapsed_time "${FUNCNAME}" "${timer}"
+# }
+
 prepare_images(){
     local timer=$(get_timer)
     load_pkgs "${profile_dir}/Packages-Root"
     run_safe "make_image_root"
-    if [[ -f "${packages_custom}" ]] ; then
-        load_pkgs "${packages_custom}"
+    if [[ -f "${packages_desktop}" ]] ; then
+        load_pkgs "${packages_desktop}"
         run_safe "make_image_desktop"
     fi
     if [[ -f ${profile_dir}/Packages-Live ]]; then
@@ -530,6 +528,10 @@ make_profile(){
         ${verbose} && archive_logs
         exit 1
     fi
+#     if ${boot_only}; then
+#         prepare_boot_loaders
+#         exit 1
+#     fi
     if ${images_only}; then
         prepare_images
         ${verbose} && archive_logs

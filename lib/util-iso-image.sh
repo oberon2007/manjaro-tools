@@ -20,6 +20,18 @@ copy_overlay(){
     fi
 }
 
+mount_img() {
+    mkdir -p "$2"
+    info "mount: [%s]" "$1"
+    mount "$1" "$2"
+}
+
+umount_img() {
+    info "umount: [%s]" "$1"
+    umount -d "$1"
+    rm -r "$1"
+}
+
 configure_plymouth(){
     if ${plymouth_boot};then
         msg2 "Configuring plymouth: %s" "${plymouth_theme}"

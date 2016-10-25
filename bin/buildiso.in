@@ -90,7 +90,6 @@ display_settings(){
     msg2 "images_only: %s" "${images_only}"
     msg2 "iso_only: %s" "${iso_only}"
     msg2 "persist: %s" "${persist}"
-    msg2 "sign: %s" "${sign}"
     msg2 "torrent: %s" "${torrent}"
 
     msg "DIST SETTINGS:"
@@ -102,8 +101,6 @@ display_settings(){
     msg2 "iso_label: %s" "${iso_label}"
     msg2 "iso_publisher: %s" "${iso_publisher}"
     msg2 "iso_app_id: %s" "${iso_app_id}"
-    msg2 "sfs_compress: %s" "${sfs_compress}"
-    msg2 "sfs_checksum: %s" "${sfs_checksum}"
     msg2 "use_overlayfs: %s" "${use_overlayfs}"
     ${verbose} && msg2 "iso_fs: %s" "${iso_fs}"
 
@@ -125,7 +122,6 @@ pretend=false
 images_only=false
 iso_only=false
 verbose=false
-sign=false
 torrent=false
 persist=false
 
@@ -143,7 +139,6 @@ usage() {
     echo '    -i <name>          Init system to use'
     echo "                       [default: ${initsys}]"
     echo '    -m                 Set SquashFS image mode to persistence'
-    echo '    -s                 Sign the iso'
     echo '    -c                 Disable clean work dir'
     echo '    -x                 Build images only'
     echo '    -z                 Generate iso only'
@@ -159,7 +154,7 @@ usage() {
 
 orig_argv=("$@")
 
-opts='p:a:b:r:t:k:i:czxsmwvqh'
+opts='p:a:b:r:t:k:i:czxmwvqh'
 
 while getopts "${opts}" arg; do
     case "${arg}" in
@@ -170,7 +165,6 @@ while getopts "${opts}" arg; do
         t) cache_dir_iso="$OPTARG" ;;
         k) kernel="$OPTARG" ;;
         i) initsys="$OPTARG" ;;
-        s) sign=true ;;
         c) clean_first=false ;;
         x) images_only=true ;;
         z) iso_only=true ;;

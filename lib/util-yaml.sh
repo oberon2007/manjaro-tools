@@ -135,7 +135,7 @@ write_unpack_conf(){
     echo "    - source: \"/run/miso/bootmnt/${iso_name}/${target_arch}/rootfs.sfs\"" >> "$conf"
     echo "      sourcefs: \"squashfs\"" >> "$conf"
     echo "      destination: \"\"" >> "$conf"
-    if [[ -f "${packages_custom}" ]] ; then
+    if [[ -f "${packages_desktop}" ]] ; then
         echo "    - source: \"/run/miso/bootmnt/${iso_name}/${target_arch}/desktopfs.sfs\"" >> "$conf"
         echo "      sourcefs: \"squashfs\"" >> "$conf"
         echo "      destination: \"\"" >> "$conf"
@@ -234,9 +234,9 @@ write_postcfg_conf(){
 get_yaml(){
     local args=() ext="yaml" yaml
     if ${chrootcfg};then
-        args+=('netinstall')
+        args+=('chrootcfg')
     else
-        args+=("hybrid")
+        args+=("packages")
     fi
     args+=("${initsys}")
     [[ ${edition} == 'sonar' ]] && args+=("${edition}")
@@ -399,7 +399,7 @@ write_pacman_group_yaml(){
 }
 
 prepare_check(){
-    profile=$1
+    local profile=$1
     edition=$(get_edition ${profile})
     profile_dir=${run_dir}/${edition}/${profile}
     check_profile
@@ -419,9 +419,9 @@ make_profile_yaml(){
     prepare_check "$1"
     load_pkgs "${profile_dir}/Packages-Root"
     write_netgroup_yaml "$1" "$(gen_fn "Packages-Root")"
-    if [[ -f "${packages_custom}" ]]; then
-        load_pkgs "${packages_custom}"
-        write_netgroup_yaml "$1" "$(gen_fn "${packages_custom##*/}")"
+    if [[ -f "${packages_desktop}" ]]; then
+        load_pkgs "${packages_desktop}"
+        write_netgroup_yaml "$1" "$(gen_fn "Packages-Desktop")"
     fi
     ${calamares} && write_calamares_yaml "$1"
     user_own "${cache_dir_netinstall}/$1" "-R"

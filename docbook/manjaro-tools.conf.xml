@@ -242,25 +242,6 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
         </varlistentry>
 
         <varlistentry>
-            <!-- TODO: Need list of other available compressions -->
-            <term><varname>sfs_compress=</varname></term>
-
-            <listitem><para>Defaults compression that will be used
-            when creating the various images. Defaults to xz.
-            </para></listitem>
-        </varlistentry>
-
-        <varlistentry>
-            <term><varname>sfs_checksum=</varname></term>
-
-            <listitem><para>Checksum that will be created against the
-            final .iso file. Can be <option>md5</option> (the default),
-            <option>sha1</option>, <option>sha256</option>,
-            <option>sha384</option> or <option>sha512</option>.
-            </para></listitem>
-        </varlistentry>
-
-        <varlistentry>
             <term><varname>initsys=</varname></term>
 
             <listitem><para>Takes <option>systemd</option> (the default)

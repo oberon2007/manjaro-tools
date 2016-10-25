@@ -1,7 +1,7 @@
 manjaro-tools
 =============
 
-Manjaro-tools-0.13
+Manjaro-tools-0.14
 
 User manual
 
@@ -111,13 +111,6 @@ overriding
 
 # iso app id
 # iso_app_id="Manjaro Linux Live/Rescue CD"
-
-# compression used, possible values xz (default, best compression), gzip, lzma, lzo, lz4
-# lz4 is faster but worst compression, may be useful for locally testing isos
-# sfs_compress=xz
-
-# valid: md5, sha1, sha256, sha384, sha512
-# sfs_checksum=md5
 
 # possible values: openrc,systemd
 # initsys="systemd"
