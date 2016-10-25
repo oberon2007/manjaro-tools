@@ -23,6 +23,7 @@ error_function() {
         plain "Aborting..."
     fi
     umount_image
+    umount_img
     exit 2
 }
 
