@@ -456,7 +456,7 @@ load_profile_config(){
 
     [[ -z ${chrootcfg} ]] && chrootcfg='false'
 
-    [[ -z ${netgroups} ]] && netgroups="https://raw.githubusercontent.com/manjaro/manjaro-tools-iso-profiles/master/shared/netinst"
+    [[ -z ${netgroups} ]] && netgroups="https://raw.githubusercontent.com/manjaro/iso-profiles/master/shared/netgroups"
 
     [[ -z ${geoip} ]] && geoip='true'
 
