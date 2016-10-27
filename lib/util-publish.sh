@@ -43,7 +43,7 @@ sync_dir(){
         create_release
         exists=true
     fi
-    msg "Start upload [%s] ..." "$1"
+    msg "Start upload [%s] --> [${remote_project}] ..." "$1"
     rsync ${rsync_args[*]} ${src_dir}/ ${url}/${target_dir}/
     msg "Done upload [%s]" "$1"
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
