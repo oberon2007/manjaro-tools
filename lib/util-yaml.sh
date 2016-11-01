@@ -232,18 +232,18 @@ write_postcfg_conf(){
 }
 
 get_yaml(){
-    local args=() ext="yaml" yaml
+    local args=() yaml
     if ${chrootcfg};then
         args+=('chrootcfg')
     else
-        args+=("packages")
+        args+=("${profile}/packages")
     fi
     args+=("${initsys}")
     [[ ${edition} == 'sonar' ]] && args+=("${edition}")
     for arg in ${args[@]};do
         yaml=${yaml:-}${yaml:+-}${arg}
     done
-    echo "${yaml}.${ext}"
+    echo "${yaml}.yaml"
 }
 
 write_netinstall_conf(){
@@ -399,7 +399,7 @@ write_pacman_group_yaml(){
 }
 
 prepare_check(){
-    local profile=$1
+    profile=$1
     edition=$(get_edition ${profile})
     profile_dir=${run_dir}/${edition}/${profile}
     check_profile
