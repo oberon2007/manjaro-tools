@@ -345,7 +345,6 @@ make_image_boot() {
         mkdir -p ${path}
 
         mount_image_live "${path}"
-        configure_plymouth "${path}"
 
 #         if [[ ${gpg_key} ]]; then
 #             gpg --export ${gpg_key} >${work_dir}/gpgkey
