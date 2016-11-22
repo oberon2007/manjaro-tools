@@ -1,8 +1,0 @@
----
-type: map
-mapping:
-    efiSystemPartition: { type: str, required: yes }
-    ensureSuspendToDisk: { type: bool, default: true, required: yes }
-    drawNestedPartitions: { type: bool, default: false, required: yes }
-    alwaysShowPartitionLabels: { type: bool, default: true, required: yes }
-    defaultFileSystemType: { type: str, required: yes }

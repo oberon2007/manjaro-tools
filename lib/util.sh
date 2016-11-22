@@ -370,8 +370,11 @@ check_profile_vars(){
     if ! is_valid_bool "${netinstall}";then
         die "netinstall only accepts true/false value!"
     fi
-    if ! is_valid_bool "${unpackfs}";then
-        die "unpackfs only accepts true/false value!"
+    if ! is_valid_bool "${chrootcfg}";then
+        die "chrootcfg only accepts true/false value!"
+    fi
+    if ! is_valid_bool "${geoip}";then
+        die "geoip only accepts true/false value!"
     fi
 }
 
@@ -453,9 +456,11 @@ load_profile_config(){
 
     [[ -z ${netinstall} ]] && netinstall='false'
 
-    [[ -z ${unpackfs} ]] && unpackfs='true'
+    [[ -z ${chrootcfg} ]] && chrootcfg='false'
 
-    [[ -z ${netgroups} ]] && netgroups="https://raw.githubusercontent.com/manjaro/manjaro-tools-iso-profiles/master/shared/netinstall"
+    #[[ -z ${netgroups} ]] && -- needs to be hardcoded for now, until a standard has been established 
+    # will be unlocked again after everything has been established.
+    netgroups="https://raw.githubusercontent.com/manjaro/manjaro-tools-iso-profiles/master/shared/netinst"
 
     [[ -z ${geoip} ]] && geoip='true'
 
@@ -471,15 +476,6 @@ get_edition(){
     [[ -z $result ]] && die "%s is not a valid profile or build list!" "$1"
     path=${result%/*}
     echo ${path##*/}
-}
-
-is_valid_de(){
-    if [[ ${default_desktop_executable} != "none" ]] && \
-    [[ ${default_desktop_file} != "none" ]]; then
-        return 0
-    else
-        return 1
-    fi
 }
 
 reset_profile(){
@@ -507,7 +503,7 @@ reset_profile(){
     unset tracker_url
     unset piece_size
     unset netinstall
-    unset unpackfs
+    unset chrootcfg
     unset netgroups
     unset geoip
 }
@@ -551,8 +547,8 @@ check_profile(){
 
     [[ -f "${profile_dir}/Packages-Mhwd" ]] && packages_mhwd=${profile_dir}/Packages-Mhwd
 
-    if ! ${netinstall} && ! ${unpackfs};then
-        unpackfs="true"
+    if ! ${netinstall}; then
+        chrootcfg="false"
     fi
 }
 

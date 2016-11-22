@@ -1,5 +1,0 @@
----
-type: map
-mapping:
-    "scrLog": { type: str }
-    "destLog": { type: str }

@@ -21,10 +21,12 @@ You should have received a copy of the GNU Lesser General Public License
 along with systemd; If not, see <http://www.gnu.org/licenses/>.
 -->
 
-<refentry id="buildpkg" xmlns:xi="http://www.w3.org/2001/XInclude">
+<refentry id="check-yaml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
     <refentryinfo>
-        <title>buildpkg-+</title>
+        <title>check-yaml-+</title>
         <productname>manjaro-tools</productname>
+
         <authorgroup>
             <author>
                 <contrib></contrib>
@@ -36,18 +38,18 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>buildpkg</refentrytitle>
+        <refentrytitle>check-yaml</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>buildpkg</refname>
-        <refpurpose>buildpkg is used to build packages in a clean chroot. </refpurpose>
+        <refname>check-yaml</refname>
+        <refpurpose>check-yaml is used to generate and validate yaml files used by calamares. </refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
         <cmdsynopsis>
-            <command>buildpkg</command>
+            <command>check-yaml</command>
             <arg choice="opt" rep="repeat">OPTIONS</arg>
         </cmdsynopsis>
     </refsynopsisdiv>
@@ -55,9 +57,9 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
     <refsect1>
         <title>Description</title>
 
-        <para><command>buildpkg</command> is used to build a particular package or a set of packages. </para>
+        <para><command>check-yaml</command> is used to generate and validate yaml files used by calamares.</para>
 
-        <para>With buildpkg you can build packages in a clean chroot environment.</para>
+        <para>check-yaml is a script to generate and validate yaml files by yaml schemas. Buildiso generates these files also, but check-yaml is a standalone version without the need to build the entire iso.</para>
 
     </refsect1>
 
@@ -70,63 +72,49 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
             <varlistentry>
                 <term><option>-p PROFILE...</option></term>
 
-                <listitem><para>Name of the build list or name of the directory
-                you will build. It needs to cantain a existing build list or a
-                folder with a valid PKGBUILD.</para></listitem>
+                <listitem><para>Name of the build list or name of the directory.</para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>-a i686|x86_64|multilib|arm|armv6h|armv7h|aarch64</option></term>
+                <term><option>-a i686|x86_64</option></term>
 
-                <listitem><para>Architecture that the iso will be built. Can be i686, x86_64 or multilib.</para></listitem>
+                <listitem><para>Architecture that the yaml will be created for. Can be i686 or x86_64.</para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>-b stable|testing|unstable</option></term>
+                <term><option>-i systemd|openrc</option></term>
 
-                <listitem><para>Branch to build against..</para></listitem>
+                <listitem><para>The init system the yaml will be created for.</para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>-r DIR</option></term>
+                <term><option>-k linuxXXX</option></term>
 
-                <listitem><para>Root working directory where the package will be built.</para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>-i PKG</option></term>
-
-                <listitem><para>Install a package into the working copy of the chroot.</para></listitem>
+                <listitem><para>The kernel the yaml will be created for.</para></listitem>
             </varlistentry>
 
             <varlistentry>
                 <term><option>-c</option></term>
 
-                <listitem><para>Recreate chroot.</para></listitem>
+                <listitem><para>Create calamares yaml conf files.</para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>-w</option></term>
+                <term><option>-g</option></term>
 
-                <listitem><para>Clean up cache and sources.</para></listitem>
+                <listitem><para>Generate a packman group netgroup yaml file.</para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>-n</option></term>
+                <term><option>-v</option></term>
 
-                <listitem><para>Install built package in chroot and run namcap check.</para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>-s</option></term>
-
-                <listitem><para>Sign package.</para></listitem>
+                <listitem><para>Validate the yaml file by yaml schema.</para></listitem>
             </varlistentry>
 
             <varlistentry>
                 <term><option>-q</option></term>
 
-                <listitem><para>Query settings and pretend build.</para></listitem>
+                <listitem><para>Query settings.</para></listitem>
             </varlistentry>
 
             <varlistentry>
@@ -138,10 +126,20 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
 
     </refsect1>
 
+    <!--<refsect1>
+        <title>Exit status</title>
+
+        <para>On success, 0 is returned, a non-zero failure code
+        otherwise.</para>
+    </refsect1>
+    -->
+
     <refsect1>
         <title>See Also</title>
         <para>
             <citerefentry project='manjaro-tools'><refentrytitle>manjaro-tools.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+            <citerefentry project='manjaro-tools'><refentrytitle>profiles.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
         </para>
     </refsect1>
+
 </refentry>

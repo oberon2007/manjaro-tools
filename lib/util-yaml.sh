@@ -108,14 +108,14 @@ write_services_conf(){
 write_displaymanager_conf(){
     local conf="${modules_dir}/displaymanager.conf"
     msg2 "Writing %s ..." "${conf##*/}"
-    echo "displaymanagers:" > "$conf"
-    echo "  - ${displaymanager}" >> "$conf"
-    echo '' >> "$conf"
-    if $(is_valid_de); then
-        echo "defaultDesktopEnvironment:" >> "$conf"
-        echo "    executable: \"${default_desktop_executable}\"" >> "$conf"
-        echo "    desktopFile: \"${default_desktop_file}\"" >> "$conf"
-    fi
+    echo "---" > "$conf"
+    echo "displaymanagers:" >> "$conf"
+    echo "  - lightdm" >> "$conf"
+    echo "  - gdm" >> "$conf"
+    echo "  - mdm" >> "$conf"
+    echo "  - sddm" >> "$conf"
+    echo "  - lxdm" >> "$conf"
+    echo "  - slim" >> "$conf"
     echo '' >> "$conf"
     echo "basicSetup: false" >> "$conf"
 }
@@ -173,7 +173,7 @@ write_welcome_conf(){
     echo "showReleaseNotesUrl:    true" >> "$conf"
     echo '' >> "$conf"
     echo "requirements:" >> "$conf"
-    echo "    requiredStorage:    5.5" >> "$conf"
+    echo "    requiredStorage:    8.0" >> "$conf"
     echo "    requiredRam:        1.0" >> "$conf"
     echo "    check:" >> "$conf"
     echo "      - storage" >> "$conf"
@@ -206,21 +206,13 @@ write_mhwdcfg_conf(){
     echo "      - 302" >> "$conf"
     echo "      - 380" >> "$conf"
     echo '' >> "$conf"
-    if ${nonfree_mhwd};then
-        echo "driver: nonfree" >> "$conf"
-    else
-        echo "driver: free" >> "$conf"
-    fi
+    local drv="free"
+    ${nonfree_mhwd} && drv="nonfree"
+    echo "driver: ${drv}" >> "$conf"
     echo '' >> "$conf"
-    if ${netinstall};then
-        if ${unpackfs};then
-            echo "local: true" >> "$conf"
-        else
-            echo "local: false" >> "$conf"
-        fi
-    else
-        echo "local: true" >> "$conf"
-    fi
+    local switch='true'
+    ${chrootcfg} && switch='false'
+    echo "local: ${switch}" >> "$conf"
     echo '' >> "$conf"
     echo 'repo: /opt/pacman-mhwd.conf' >> "$conf"
 }
@@ -241,10 +233,10 @@ write_postcfg_conf(){
 
 get_yaml(){
     local args=() ext="yaml" yaml
-    if ${unpackfs};then
-        args+=("hybrid")
-    else
+    if ${chrootcfg};then
         args+=('netinstall')
+    else
+        args+=("hybrid")
     fi
     args+=("${initsys}")
     [[ ${edition} == 'sonar' ]] && args+=("${edition}")
@@ -287,57 +279,57 @@ write_settings_conf(){
     echo "---" > "$conf"
     echo "modules-search: [ local ]" >> "$conf"
     echo '' >> "$conf"
-    echo "instances:" >> "$conf"
-    echo '' >> "$conf"
     echo "sequence:" >> "$conf"
-    echo "- show:" >> "$conf"
-    echo "  - welcome" >> "$conf"
-    ${netinstall} && echo "  - netinstall" >> "$conf"
-    echo "  - locale" >> "$conf"
-    echo "  - keyboard" >> "$conf"
-    echo "  - partition" >> "$conf"
-    echo "  - users" >> "$conf"
-    echo "  - summary" >> "$conf"
-    echo "- exec:" >> "$conf"
-    echo "  - partition" >> "$conf"
-    echo "  - mount" >> "$conf"
+    echo "    - show:" >> "$conf"
+    echo "        - welcome" >> "$conf" && write_welcome_conf
+    echo "        - locale" >> "$conf" && write_locale_conf
+    echo "        - keyboard" >> "$conf"
+    echo "        - partition" >> "$conf"
+    echo "        - users" >> "$conf" && write_users_conf
     if ${netinstall};then
-        if ${unpackfs};then
-            echo "  - unpackfs" >> "$conf"
-            echo "  - networkcfg" >> "$conf"
-            echo "  - packages" >> "$conf"
+        echo "        - netinstall" >> "$conf" && write_netinstall_conf
+    fi
+    echo "        - summary" >> "$conf"
+    echo "    - exec:" >> "$conf"
+    echo "        - partition" >> "$conf"
+    echo "        - mount" >> "$conf"
+    if ${netinstall};then
+        if ${chrootcfg}; then
+            echo "        - chrootcfg" >> "$conf"
+            echo "        - networkcfg" >> "$conf"
         else
-            echo "  - chrootcfg" >> "$conf"
-            echo "  - networkcfg" >> "$conf"
+            echo "        - unpackfs" >> "$conf" && write_unpack_conf
+            echo "        - networkcfg" >> "$conf"
+            echo "        - packages" >> "$conf" && write_packages_conf
         fi
     else
-        echo "  - unpackfs" >> "$conf"
-        echo "  - networkcfg" >> "$conf"
+        echo "        - unpackfs" >> "$conf" && write_unpack_conf
+        echo "        - networkcfg" >> "$conf"
     fi
-    echo "  - machineid" >> "$conf"
-    echo "  - fstab" >> "$conf"
-    echo "  - locale" >> "$conf"
-    echo "  - keyboard" >> "$conf"
-    echo "  - localecfg" >> "$conf"
-    echo "  - luksopenswaphookcfg" >> "$conf"
-    echo "  - luksbootkeyfile" >> "$conf"
-    echo "  - plymouthcfg" >> "$conf"
-    echo "  - initcpiocfg" >> "$conf"
-    echo "  - initcpio" >> "$conf"
-    echo "  - users" >> "$conf"
-    echo "  - displaymanager" >> "$conf"
-    echo "  - mhwdcfg" >> "$conf"
-    echo "  - hwclock" >> "$conf"
+    echo "        - machineid" >> "$conf" && write_machineid_conf
+    echo "        - fstab" >> "$conf"
+    echo "        - locale" >> "$conf"
+    echo "        - keyboard" >> "$conf"
+    echo "        - localecfg" >> "$conf"
+    echo "        - luksopenswaphookcfg" >> "$conf"
+    echo "        - luksbootkeyfile" >> "$conf"
+    echo "        - plymouthcfg" >> "$conf" && write_plymouthcfg_conf
+    echo "        - initcpiocfg" >> "$conf"
+    echo "        - initcpio" >> "$conf" && write_initcpio_conf
+    echo "        - users" >> "$conf"
+    echo "        - displaymanager" >> "$conf" && write_displaymanager_conf
+    echo "        - mhwdcfg" >> "$conf" && write_mhwdcfg_conf
+    echo "        - hwclock" >> "$conf"
     case ${initsys} in
-        'systemd') echo "  - services" >> "$conf" ;;
-        'openrc') echo "  - servicescfg" >> "$conf" ;;
+        'systemd') echo "        - services" >> "$conf" && write_services_conf ;;
+        'openrc') echo "        - servicescfg" >> "$conf" && write_servicescfg_conf ;;
     esac
-    echo "  - grubcfg" >> "$conf"
-    echo "  - bootloader" >> "$conf"
-    echo "  - postcfg" >> "$conf"
-    echo "  - umount" >> "$conf"
-    echo "- show:" >> "$conf"
-    echo "  - finished" >> "$conf"
+    echo "        - grubcfg" >> "$conf"
+    echo "        - bootloader" >> "$conf" && write_bootloader_conf
+    echo "        - postcfg" >> "$conf" && write_postcfg_conf
+    echo "        - umount" >> "$conf"
+    echo "    - show:" >> "$conf"
+    echo "        - finished" >> "$conf" && write_finished_conf
     echo '' >> "$conf"
     echo "branding: ${iso_name}" >> "$conf"
     echo '' >> "$conf"
@@ -348,66 +340,30 @@ write_settings_conf(){
 
 configure_calamares(){
     info "Configuring [Calamares]"
-
     modules_dir=$1/etc/calamares/modules
-
-    mkdir -p ${modules_dir}
-
+    prepare_dir "${modules_dir}"
     write_settings_conf "$1"
-
-    write_locale_conf
-
-    write_welcome_conf
-
-    if ${netinstall};then
-        write_netinstall_conf
-        write_packages_conf
-    fi
-
-    write_bootloader_conf
-
-    write_mhwdcfg_conf
-
-    write_unpack_conf
-
-    write_displaymanager_conf
-
-    write_initcpio_conf
-
-    write_machineid_conf
-
-    write_finished_conf
-
-    write_plymouthcfg_conf
-
-    write_postcfg_conf
-
-    case ${initsys} in
-        'systemd') write_services_conf ;;
-        'openrc') write_servicescfg_conf ;;
-    esac
-
-    write_users_conf
-
     info "Done configuring [Calamares]"
 }
 
 check_yaml(){
     msg2 "Checking validity [%s] ..." "${1##*/}"
-    local name=${1##*/} data schema
+    local name=${1##*/} data=$1 schema
     case ${name##*.} in
         yaml)
             name=netgroups
-            data=$1
+#             data=$1
         ;;
         conf)
             name=${name%.conf}
-            data=${tmp_dir}/$name.yaml
-            cp $1 $data
+#             data=${tmp_dir}/$name.yaml
+#             cp $1 $data
         ;;
     esac
-    schema=${DATADIR}/schemas/$name.schema.yaml
-    pykwalify -d $data -s $schema
+    local schemas_dir=/usr/share/calamares/schemas
+    schema=${schemas_dir}/$name.schema.yaml
+#     pykwalify -d $data -s $schema
+    kwalify -lf $schema $data
 }
 
 write_calamares_yaml(){
@@ -422,7 +378,8 @@ write_calamares_yaml(){
 
 write_netgroup_yaml(){
     msg2 "Writing %s ..." "${2##*/}"
-    echo "- name: '$1'" > "$2"
+    echo "---" > "$2"
+    echo "- name: '$1'" >> "$2"
     echo "  description: '$1'" >> "$2"
     echo "  selected: false" >> "$2"
     echo "  hidden: false" >> "$2"

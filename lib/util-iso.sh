@@ -168,24 +168,11 @@ make_iso() {
     msg "Done [Build ISO]"
 }
 
-# $1: file
-make_checksum(){
-    msg "Creating [%s] sum ..." "${iso_checksum}"
-    local cs=$(${iso_checksum}sum ${iso_dir}/$1)
-    msg2 "%s sum: %s" "${iso_checksum}" "${cs##*/}"
-    echo "${cs}" > ${iso_dir}/$1.${iso_checksum}
-    msg "Done [%s] sum" "${iso_checksum}"
-}
-
 gen_iso_fn(){
     local vars=() name
     vars+=("${iso_name}")
-    if ! ${netinstall};then
+    if ! ${chrootcfg};then
         [[ -n ${profile} ]] && vars+=("${profile}")
-    else
-        if ${unpackfs};then
-            [[ -n ${profile} ]] && vars+=("${profile}")
-        fi
     fi
     [[ ${initsys} == 'openrc' ]] && vars+=("${initsys}")
     vars+=("${dist_release}")
@@ -451,6 +438,16 @@ make_torrent(){
     msg2 "Creating (%s) ..." "${fn}"
     [[ -f ${iso_dir}/${fn} ]] && rm ${iso_dir}/${fn}
     mktorrent ${mktorrent_args[*]} -o ${iso_dir}/${fn} ${iso_dir}/${iso_file}
+}
+
+# $1: file
+make_checksum(){
+    msg "Creating [%s] sum ..." "${iso_checksum}"
+    cd ${iso_dir}
+    local cs=$(${iso_checksum}sum $1)
+    msg2 "%s sum: %s" "${iso_checksum}" "${cs##*/}"
+    echo "${cs}" > ${iso_dir}/$1.${iso_checksum}
+    msg "Done [%s] sum" "${iso_checksum}"
 }
 
 compress_images(){
