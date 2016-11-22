@@ -32,7 +32,7 @@ connect(){
 prepare_transfer(){
     local edition=$(get_edition $1)
     project=$(get_project "${edition}")
-    url=$(connect "${project}")
+    url=$(connect "${remote_project}")
     target_dir="${dist_release}/$1"
     src_dir="${run_dir}/${edition}/${target_dir}"
 }
@@ -43,7 +43,7 @@ sync_dir(){
         create_release
         exists=true
     fi
-    msg "Start upload [%s] ..." "$1"
+    msg "Start upload [%s] --> [${remote_project}] ..." "$1"
     rsync ${rsync_args[*]} ${src_dir}/ ${url}/${target_dir}/
     msg "Done upload [%s]" "$1"
     show_elapsed_time "${FUNCNAME}" "${timer_start}"

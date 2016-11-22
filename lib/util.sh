@@ -318,6 +318,8 @@ init_buildiso(){
 
 init_deployiso(){
 
+    [[ -z ${remote_project} ]] && remote_project="manjarolinux-community"
+
     [[ -z ${account} ]] && account="[SetUser]"
 
     [[ -z ${limit} ]] && limit=100
@@ -458,9 +460,7 @@ load_profile_config(){
 
     [[ -z ${chrootcfg} ]] && chrootcfg='false'
 
-    #[[ -z ${netgroups} ]] && -- needs to be hardcoded for now, until a standard has been established 
-    # will be unlocked again after everything has been established.
-    netgroups="https://raw.githubusercontent.com/manjaro/manjaro-tools-iso-profiles/master/shared/netinst"
+    [[ -z ${netgroups} ]] && netgroups="https://raw.githubusercontent.com/manjaro/manjaro-tools-iso-profiles/master/shared/netinstall"
 
     [[ -z ${geoip} ]] && geoip='true'
 
