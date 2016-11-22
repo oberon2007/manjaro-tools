@@ -175,7 +175,7 @@ write_welcome_conf(){
     echo "showReleaseNotesUrl:    true" >> "$conf"
     echo '' >> "$conf"
     echo "requirements:" >> "$conf"
-    echo "    requiredStorage:    5.5" >> "$conf"
+    echo "    requiredStorage:    8.0" >> "$conf"
     echo "    requiredRam:        1.0" >> "$conf"
     echo "    check:" >> "$conf"
     echo "      - storage" >> "$conf"
