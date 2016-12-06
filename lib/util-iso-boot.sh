@@ -36,10 +36,10 @@ gen_boot_args(){
 
 prepare_initcpio(){
     msg2 "Copying initcpio ..."
-    cp /usr/lib/initcpio/hooks/miso* $1/etc/initcpio/hooks
-    cp /usr/lib/initcpio/install/miso* $1/etc/initcpio/install
-    cp /usr/lib/initcpio/miso_shutdown $1/etc/initcpio
-    sed -e "s|/usr/lib/initcpio/|/etc/initcpio/|" -i $1/etc/initcpio/install/miso_shutdown
+    cp /etc/initcpio/hooks/miso* $1/etc/initcpio/hooks
+    cp /etc/initcpio/install/miso* $1/etc/initcpio/install
+    cp /etc/initcpio/miso_shutdown $1/etc/initcpio
+#     sed -e "s|/usr/lib/initcpio/|/etc/initcpio/|" -i $1/etc/initcpio/install/miso_shutdown
 }
 
 prepare_initramfs(){

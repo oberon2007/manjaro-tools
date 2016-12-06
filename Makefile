@@ -187,13 +187,22 @@ install_iso:
 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/manjaro-tools
 	install -m0644 ${LIBS_ISO} $(DESTDIR)$(PREFIX)/lib/manjaro-tools
 
-	install -dm0755 $(DESTDIR)$(PREFIX)/lib/initcpio/hooks
-	install -m0755 ${CPIOHOOKS} $(DESTDIR)$(PREFIX)/lib/initcpio/hooks
+# 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/initcpio/hooks
+# 	install -m0755 ${CPIOHOOKS} $(DESTDIR)$(PREFIX)/lib/initcpio/hooks
+#
+# 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/initcpio/install
+# 	install -m0755 ${CPIOINST} $(DESTDIR)$(PREFIX)/lib/initcpio/install
 
-	install -dm0755 $(DESTDIR)$(PREFIX)/lib/initcpio/install
-	install -m0755 ${CPIOINST} $(DESTDIR)$(PREFIX)/lib/initcpio/install
+# 	install -m0755 ${CPIO} $(DESTDIR)$(PREFIX)/lib/initcpio
 
-	install -m0755 ${CPIO} $(DESTDIR)$(PREFIX)/lib/initcpio
+	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/initcpio/hooks
+	install -m0755 ${CPIOHOOKS} $(DESTDIR)$(SYSCONFDIR)/initcpio/hooks
+
+	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/initcpio/install
+	install -m0755 ${CPIOINST} $(DESTDIR)$(SYSCONFDIR)/initcpio/install
+
+	install -m0755 ${CPIO} $(DESTDIR)$(SYSCONFDIR)/initcpio
+
 
 	install -dm0755 $(DESTDIR)$(PREFIX)/share/manjaro-tools
 	install -m0644 ${SHARED_ISO} $(DESTDIR)$(PREFIX)/share/manjaro-tools
@@ -241,9 +250,9 @@ uninstall_iso:
 	for f in ${SHARED_ISO}; do rm -f $(DESTDIR)$(PREFIX)/share/manjaro-tools/$$f; done
 
 	for f in ${LIBS_ISO}; do rm -f $(DESTDIR)$(PREFIX)/lib/manjaro-tools/$$f; done
-	for f in ${CPIOHOOKS}; do rm -f $(DESTDIR)$(PREFIX)/lib/initcpio/hooks/$$f; done
-	for f in ${CPIOINST}; do rm -f $(DESTDIR)$(PREFIX)/lib/initcpio/install/$$f; done
-	for f in ${CPIO}; do rm -f $(DESTDIR)$(PREFIX)/lib/initcpio/$$f; done
+	for f in ${CPIOHOOKS}; do rm -f $(DESTDIR)$(SYSCONFDIR)/initcpio/hooks/$$f; done
+	for f in ${CPIOINST}; do rm -f $(DESTDIR)$(SYSCONFDIR)/initcpio/install/$$f; done
+	for f in ${CPIO}; do rm -f $(DESTDIR)$(SYSCONFDIR)/initcpio/$$f; done
 	rm -f $(DESTDIR)$(PREFIX)/share/man/man1/buildiso.1.gz
 	rm -f $(DESTDIR)$(PREFIX)/share/man/man1/deployiso.1.gz
 	rm -f $(DESTDIR)$(PREFIX)/share/man/man5/manjaro-tools.conf.5.gz
