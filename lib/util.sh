@@ -403,7 +403,7 @@ load_profile_config(){
     [[ -z ${pxe_boot} ]] && pxe_boot="true"
 
     [[ -z ${plymouth_boot} ]] && plymouth_boot="true"
-# 	[[ ${initsys} == 'openrc' ]] && plymouth_boot="false"
+#     [[ ${initsys} == 'openrc' ]] && plymouth_boot="false"
 
     [[ -z ${nonfree_mhwd} ]] && nonfree_mhwd="true"
 
@@ -479,12 +479,10 @@ reset_profile(){
     unset autologin
     unset multilib
     unset pxe_boot
-    unset plymouth_boot
     unset nonfree_mhwd
     unset efi_boot_loader
     unset hostname
     unset username
-    unset plymouth_theme
     unset password
     unset addgroups
     unset enable_systemd
@@ -502,6 +500,8 @@ reset_profile(){
     unset chrootcfg
     unset netgroups
     unset geoip
+    unset plymouth_boot
+    unset plymouth_theme
 }
 
 check_profile(){
@@ -605,6 +605,13 @@ load_pkgs(){
         ;;
     esac
 
+    local _plymouth _plymouth_rm
+    if ${plymouth_boot};then
+        _plymouth="s|>plymouth||g"
+    else
+        _plymouth_rm="s|>plymouth.*||g"
+    fi
+
     local _edition _edition_rm
     case "${edition}" in
         'sonar')
@@ -642,6 +649,8 @@ load_pkgs(){
             | sed "$_kernel" \
             | sed "$_edition" \
             | sed "$_edition_rm" \
+            | sed "$_plymouth" \
+            | sed "$_plymouth_rm" \
             | sed "$_clean")
 
     if [[ $1 == "${packages_mhwd}" ]]; then
