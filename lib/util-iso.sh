@@ -109,7 +109,7 @@ make_sfs() {
     fi
 
     if ${persist};then
-        local size=32G
+        local size=31G
         local mnt="${mnt_dir}/${name}"
         msg2 "Creating ext4 image of %s ..." "${size}"
         truncate -s ${size} "${src}.img"
