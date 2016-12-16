@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for f in $(find . -maxdepth 1 -name '*.iso' | cut -d'/' -f2); do
+  md5sum $f > $f.md5
+  signfile $f
+done
