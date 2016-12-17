@@ -1,6 +1,11 @@
 #!/bin/bash
 
+LIBDIR='/usr/lib/manjaro-tools'
+
+[[ -r ${LIBDIR}/util-msg.sh ]] && source ${LIBDIR}/util-msg.sh
+
 for f in $(find . -maxdepth 1 -name '*.iso' | cut -d'/' -f2); do
+  msg2 "creating checksum for [$f]"
   md5sum $f > $f.md5
   signfile $f
 done
