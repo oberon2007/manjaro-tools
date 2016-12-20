@@ -27,7 +27,7 @@ mount_image_custom(){
 
 mount_image_live(){
     IMAGE_ACTIVE_MOUNTS=()
-    track_image -t aufs -o br="$1":${work_dir}/livefs=ro:${work_dir}/rootfs=ro none "$1"
+    track_image -t aufs -o br="$1":${work_dir}/livefs=ro:${work_dir}/desktopfs=ro:${work_dir}/rootfs=ro none "$1"
 }
 
 # $1: image path

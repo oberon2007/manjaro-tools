@@ -303,7 +303,7 @@ init_buildiso(){
 
     [[ -z ${initsys} ]] && initsys="systemd"
 
-    [[ -z ${kernel} ]] && kernel="linux44"
+    [[ -z ${kernel} ]] && kernel="linux49"
 
     [[ -z ${use_overlayfs} ]] && use_overlayfs='true'
 

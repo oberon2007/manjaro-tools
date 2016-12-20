@@ -98,10 +98,10 @@ overriding
 # dist_name="Manjaro"
 
 # the dist release; default: auto
-# dist_release=16.10
+# dist_release=17.0
 
 # the codename; defaults to value sourced from /etc/lsb-release
-# dist_codename="Fringilla"
+# dist_codename="Gellivara"
 
 # the branding; default: auto
 # dist_branding="MJRO"
@@ -116,7 +116,7 @@ overriding
 # initsys="systemd"
 
 # unset defaults to given value
-# kernel="linux44"
+# kernel="linux49"
 
 # experimental; use overlayfs instead of aufs
 # requires minimum 4.0 kernel on the build host and on iso in profile.conf

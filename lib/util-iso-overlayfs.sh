@@ -30,7 +30,7 @@ mount_image_custom(){
 mount_image_live(){
     IMAGE_ACTIVE_MOUNTS=()
     mkdir -p "${mnt_dir}/work"
-    track_image -t overlay overlay -olowerdir="${work_dir}/livefs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
+    track_image -t overlay overlay -olowerdir="${work_dir}/livefs":"${work_dir}/desktopfs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
 }
 
 umount_image(){
