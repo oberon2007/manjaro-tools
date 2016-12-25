@@ -108,9 +108,13 @@ prepare_efi_loader(){
 }
 
 check_syslinux_select(){
-    if [[ ! -f ${boot}/x86_64/vmlinuz ]] ; then
+    local boot="${iso_root}/${iso_name}/boot"
+    if [[ ! -f ${boot}/x86_64/vmlinuz ]]; then
         msg2 "Configuring syslinux for i686 architecture only ..."
         sed -e "s/select.cfg/i686_inc.cfg/g" -i "$1/miso.cfg"
+    elif [[ -f ${boot}/i686/vmlinuz ]]; then
+        msg2 "Configuring syslinux for both architectures ..."
+        sed -e "s/i686_inc.cfg/select.cfg/g" -i "$1/miso.cfg"
     fi
 }
 

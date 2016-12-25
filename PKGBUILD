@@ -4,13 +4,14 @@
 _pkgbase=manjaro-tools
 _ver=0.14.0
 _branch=master
+#_commit=e47f0111d89beb8ac30259275e190d20228670fa
 
 pkgbase=manjaro-tools-git
 pkgname=('manjaro-tools-base-git'
         'manjaro-tools-pkg-git'
         'manjaro-tools-iso-git'
         'manjaro-tools-yaml-git')
-pkgver=0.13.0.r318.g2e5d9f7
+pkgver=0.13.0.r329.g8c619c8
 pkgrel=1
 arch=('any')
 pkgdesc='Development tools for Manjaro Linux'
@@ -19,6 +20,7 @@ groups=('manjaro-tools')
 url='https://github.com/oberon2007/manjaro-tools'
 makedepends=('git' 'docbook2x')
 source=("git+$url.git#branch=$_branch")
+#source=("git+$url.git#commit=$_commit")
 sha256sums=('SKIP')
 
 prepare() {
