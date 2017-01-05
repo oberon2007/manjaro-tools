@@ -153,7 +153,7 @@ write_users_conf(){
     done
     unset IFS
     echo "autologinGroup:  autologin" >> "$conf"
-    echo "doAutologin:     ${autologin}" >> "$conf"
+    echo "doAutologin:     false" >> "$conf"
     echo "sudoersGroup:    wheel" >> "$conf"
     echo "setRootPassword: false" >> "$conf"
     echo "availableShells: /bin/bash, /bin/zsh" >> "$conf"
