@@ -388,7 +388,7 @@ make_efi_dvd() {
 
         local size=31M
         local mnt="${mnt_dir}/efiboot" img="${src}/efiboot.img"
-        ${pxe_boot} && size=40M
+        ${pxe_boot} && size=46M
         msg2 "Creating fat image of %s ..." "${size}"
         truncate -s ${size} "${img}"
         mkfs.fat -n MISO_EFI "${img}" &>/dev/null

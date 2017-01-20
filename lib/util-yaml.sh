@@ -153,10 +153,11 @@ write_users_conf(){
     done
     unset IFS
     echo "autologinGroup:  autologin" >> "$conf"
-    echo "doAutologin:     false" >> "$conf"
+    echo "doAutologin:     false" >> "$conf" # can be either 'true' or 'false'
     echo "sudoersGroup:    wheel" >> "$conf"
-    echo "setRootPassword: true" >> "$conf"
-    echo "availableShells: /bin/bash, /bin/zsh" >> "$conf"
+    echo "setRootPassword: true" >> "$conf" # must be true, else some options get hidden
+    echo "doReusePassword: false" >> "$conf" # only used in old 'users' module
+    echo "availableShells: /bin/bash, /bin/zsh" >> "$conf" # only used in new 'users' module
 }
 
 write_packages_conf(){
