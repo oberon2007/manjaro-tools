@@ -158,6 +158,7 @@ write_users_conf(){
     echo "setRootPassword: true" >> "$conf" # must be true, else some options get hidden
     echo "doReusePassword: false" >> "$conf" # only used in old 'users' module
     echo "availableShells: /bin/bash, /bin/zsh" >> "$conf" # only used in new 'users' module
+    echo "avatarFilePath:  ~/.face" >> "$conf" # mostly used file-name for avatar
 }
 
 write_packages_conf(){

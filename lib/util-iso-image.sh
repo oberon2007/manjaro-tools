@@ -113,7 +113,6 @@ configure_mhwd_drivers(){
 }
 
 configure_lsb(){
-    [[ -f $1/boot/grub/grub.cfg ]] && rm $1/boot/grub/grub.cfg
     if [ -e $1/etc/lsb-release ] ; then
         msg2 "Configuring lsb-release"
         sed -i -e "s/^.*DISTRIB_RELEASE.*/DISTRIB_RELEASE=${dist_release}/" $1/etc/lsb-release
@@ -248,7 +247,6 @@ configure_thus(){
 configure_live_image(){
     msg "Configuring [livefs]"
     configure_hosts "$1"
-    configure_lsb "$1"
     configure_mhwd "$1"
     configure_system "$1"
     configure_services "$1"
@@ -352,4 +350,8 @@ clean_up_image(){
         fi
     fi
 	find "$1" -name *.pacnew -name *.pacsave -name *.pacorig -delete
+	file=$1/boot/grub/grub.cfg
+        if [[ -f "$file" ]]; then
+            rm $file
+        fi
 }

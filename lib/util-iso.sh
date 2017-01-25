@@ -242,6 +242,8 @@ make_image_root() {
 
         reset_pac_conf "${path}"
 
+        configure_lsb "${path}"
+
         clean_up_image "${path}"
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [Base installation] (rootfs)"
