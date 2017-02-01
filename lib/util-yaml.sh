@@ -257,13 +257,6 @@ write_netinstall_conf(){
     echo "groupsUrl: ${netgroups}/$(get_yaml)" >> "$conf"
 }
 
-write_plymouthcfg_conf(){
-    local conf="${modules_dir}/plymouthcfg.conf"
-    msg2 "Writing %s ..." "${conf##*/}"
-    echo "---" > "$conf"
-    echo "plymouth_theme: ${plymouth_theme}" >> "$conf"
-}
-
 write_locale_conf(){
     local conf="${modules_dir}/locale.conf"
     msg2 "Writing %s ..." "${conf##*/}"
@@ -317,7 +310,6 @@ write_settings_conf(){
     echo "        - localecfg" >> "$conf"
     echo "        - luksopenswaphookcfg" >> "$conf"
     echo "        - luksbootkeyfile" >> "$conf"
-    echo "        - plymouthcfg" >> "$conf" && write_plymouthcfg_conf
     echo "        - initcpiocfg" >> "$conf"
     echo "        - initcpio" >> "$conf" && write_initcpio_conf
     echo "        - users" >> "$conf"

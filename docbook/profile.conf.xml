@@ -133,15 +133,6 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
             </varlistentry>
 
             <varlistentry>
-                <term><varname>plymouth_theme=</varname></term>
-
-                <listitem><para>Takes the name of the plymouth
-                theme. It should be the directory of a valid
-                plymouth theme installed in /usr/share/plymouth/themes/
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><varname>enable_systemd=</varname></term>
 
                 <listitem><para>Array of services that will be

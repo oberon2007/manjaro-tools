@@ -9,32 +9,37 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-track_image() {
+track_fs() {
     info "%s mount: [%s]" "${iso_fs}" "$6"
-    mount "$@" && IMAGE_ACTIVE_MOUNTS=("$6" "${IMAGE_ACTIVE_MOUNTS[@]}")
+    mount "$@" && FS_ACTIVE_MOUNTS=("$6" "${FS_ACTIVE_MOUNTS[@]}")
 }
 
 # $1: new branch
-mount_image(){
-    IMAGE_ACTIVE_MOUNTS=()
-    track_image -t aufs -o br="$1":${work_dir}/rootfs=ro none "$1"
+mount_fs_root(){
+    FS_ACTIVE_MOUNTS=()
+    track_fs -t aufs -o br="$1":${work_dir}/rootfs=ro none "$1"
 }
 
-mount_image_custom(){
-    IMAGE_ACTIVE_MOUNTS=()
-    track_image -t aufs -o br="$1":${work_dir}/desktopfs=ro:${work_dir}/rootfs=ro none "$1"
+mount_fs_desktop(){
+    FS_ACTIVE_MOUNTS=()
+    track_fs -t aufs -o br="$1":${work_dir}/desktopfs=ro:${work_dir}/rootfs=ro none "$1"
 }
 
-mount_image_live(){
-    IMAGE_ACTIVE_MOUNTS=()
-    track_image -t aufs -o br="$1":${work_dir}/livefs=ro:${work_dir}/desktopfs=ro:${work_dir}/rootfs=ro none "$1"
+mount_fs_live(){
+    FS_ACTIVE_MOUNTS=()
+    track_fs -t aufs -o br="$1":${work_dir}/livefs=ro:${work_dir}/desktopfs=ro:${work_dir}/rootfs=ro none "$1"
+}
+
+mount_fs_net(){
+    FS_ACTIVE_MOUNTS=()
+    track_fs -t aufs -o br="$1":${work_dir}/livefs=ro:${work_dir}/rootfs=ro none "$1"
 }
 
 # $1: image path
-umount_image(){
-    if [[ -n ${IMAGE_ACTIVE_MOUNTS[@]} ]];then
-        umount "${IMAGE_ACTIVE_MOUNTS[@]}"
-        unset IMAGE_ACTIVE_MOUNTS
+umount_fs(){
+    if [[ -n ${FS_ACTIVE_MOUNTS[@]} ]];then
+        umount "${FS_ACTIVE_MOUNTS[@]}"
+        unset FS_ACTIVE_MOUNTS
         find $1 -name '.wh.*' -delete &> /dev/null
     fi
 }

@@ -40,22 +40,6 @@ umount_img() {
     fi
 }
 
-# has_plymouth(){
-#     if $(chroot "$1" which plymouth);then
-#         return 0
-#     else
-#         return 1
-#     fi
-# }
-
-configure_plymouth(){
-    if [[ -f "$1"/usr/bin/plymouth ]];then
-        msg2 "Configuring plymouth: %s" "${plymouth_theme}"
-        local conf=$1/etc/plymouth/plymouthd.conf
-        sed -i -e "s/^.*Theme=.*/Theme=${plymouth_theme}/" "${conf}"
-    fi
-}
-
 add_svc_rc(){
     if [[ -f $1/etc/init.d/$2 ]];then
         msg2 "Setting %s ..." "$2"
@@ -250,7 +234,6 @@ configure_live_image(){
     configure_mhwd "$1"
     configure_system "$1"
     configure_services "$1"
-    configure_plymouth "$1"
     configure_calamares "$1"
     [[ ${edition} == "sonar" ]] && configure_thus "$1"
     write_live_session_conf "$1"

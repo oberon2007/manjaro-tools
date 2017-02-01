@@ -22,7 +22,7 @@ error_function() {
         error "A failure occurred in %s()." "$1"
         plain "Aborting..."
     fi
-    umount_image
+    umount_fs
     umount_img
     exit 2
 }
@@ -63,7 +63,7 @@ run_safe() {
 trap_exit() {
     local sig=$1; shift
     error "$@"
-    umount_image
+    umount_fs
     trap -- "$sig"
     kill "-$sig" "$$"
 }
@@ -256,7 +256,7 @@ make_image_desktop() {
         local path="${work_dir}/desktopfs"
         mkdir -p ${path}
 
-        mount_image "${path}"
+        mount_fs_root "${path}"
 
         chroot_create "${path}" "${packages}"
 
@@ -266,18 +266,18 @@ make_image_desktop() {
 
         reset_pac_conf "${path}"
 
-        umount_image
+        umount_fs
         clean_up_image "${path}"
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [Desktop installation] (desktopfs)"
     fi
 }
 
-mount_image_select(){
+mount_fs_select(){
     if [[ -f "${packages_desktop}" ]]; then
-        mount_image_custom "$1"
+        mount_fs_desktop "$1"
     else
-        mount_image "$1"
+        mount_fs_root "$1"
     fi
 }
 
@@ -287,7 +287,7 @@ make_image_live() {
         local path="${work_dir}/livefs"
         mkdir -p ${path}
 
-        mount_image_select "${path}"
+        mount_fs_select "${path}"
 
         chroot_create "${path}" "${packages}"
 
@@ -297,7 +297,7 @@ make_image_live() {
 
         reset_pac_conf "${path}"
 
-        umount_image
+        umount_fs
 
         # Clean up GnuPG keys
         rm -rf "${path}/etc/pacman.d/gnupg"
@@ -313,7 +313,7 @@ make_image_mhwd() {
         local path="${work_dir}/mhwdfs"
         mkdir -p ${path}${mhwd_repo}
 
-        mount_image_select "${path}"
+        mount_fs_select "${path}"
 
         reset_pac_conf "${path}"
 
@@ -328,7 +328,7 @@ make_image_mhwd() {
         make_repo "${path}"
         configure_mhwd_drivers "${path}"
 
-        umount_image
+        umount_fs
         clean_up_image "${path}"
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [drivers repository] (mhwdfs)"
@@ -346,7 +346,11 @@ make_image_boot() {
         local path="${work_dir}/bootfs"
         mkdir -p ${path}
 
-        mount_image_live "${path}"
+        if [[ -f "${packages_desktop}" ]]; then
+            mount_fs_live "${path}"
+        else
+            mount_fs_net "${path}"
+        fi
 
 #         if [[ ${gpg_key} ]]; then
 #             gpg --export ${gpg_key} >${work_dir}/gpgkey
@@ -363,7 +367,7 @@ make_image_boot() {
         mv ${path}/boot/initramfs.img ${boot}/${target_arch}/initramfs.img
         prepare_boot_extras "${path}" "${boot}"
 
-        umount_image
+        umount_fs
 
         rm -R ${path}
         : > ${work_dir}/build.${FUNCNAME}
@@ -473,18 +477,6 @@ compress_images(){
     user_own "${iso_dir}" "-R"
     show_elapsed_time "${FUNCNAME}" "${timer}"
 }
-
-# prepare_boot_loaders(){
-#     local timer=$(get_timer)
-#     run_safe "make_image_boot"
-#     run_safe "make_isolinux"
-#     run_safe "make_syslinux"
-#     if [[ "${target_arch}" == "x86_64" ]]; then
-#         run_safe "make_efi_usb"
-#         run_safe "make_efi_dvd"
-#     fi
-#     show_elapsed_time "${FUNCNAME}" "${timer}"
-# }
 
 prepare_images(){
     local timer=$(get_timer)
