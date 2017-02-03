@@ -166,6 +166,8 @@ write_packages_conf(){
     msg2 "Writing %s ..." "${conf##*/}"
     echo "---" > "$conf"
     echo "backend: pacman" >> "$conf"
+    echo '' >> "$conf"
+    echo "update_db: true" >> "$conf"
 }
 
 write_welcome_conf(){
@@ -179,6 +181,7 @@ write_welcome_conf(){
     echo "requirements:" >> "$conf"
     echo "    requiredStorage:    7.9" >> "$conf"
     echo "    requiredRam:        1.0" >> "$conf"
+    echo "    internetCheckUrl:   https://manjaro.org" >> "$conf"
     echo "    check:" >> "$conf"
     echo "      - storage" >> "$conf"
     echo "      - ram" >> "$conf"
@@ -240,7 +243,7 @@ get_yaml(){
     if ${chrootcfg};then
         args+=('chrootcfg')
     else
-        args+=("${profile}/packages")
+        args+=("packages")
     fi
     args+=("${initsys}")
     [[ ${edition} == 'sonar' ]] && args+=("${edition}")

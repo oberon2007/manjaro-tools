@@ -417,7 +417,7 @@ load_profile_config(){
     [[ -z ${login_shell} ]] && login_shell='/bin/bash'
 
     if [[ -z ${addgroups} ]];then
-        addgroups="video,power,disk,storage,optical,network,lp,scanner,wheel"
+        addgroups="video,power,storage,optical,network,lp,scanner,wheel"
     fi
 
     if [[ -z ${enable_systemd[@]} ]];then
