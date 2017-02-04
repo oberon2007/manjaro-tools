@@ -459,6 +459,12 @@ load_profile_config(){
 
     [[ -z ${smb_workgroup} ]] && smb_workgroup=''
 
+    [[ -z ${basic} ]] && basic='true'
+    [[ -z ${extra} ]] && extra='false'
+
+    #${basic} && extra='false'
+    ${extra} && basic='false'
+
     check_profile_vars
 
     return 0
@@ -498,6 +504,7 @@ reset_profile(){
     unset netgroups
     unset geoip
     unset plymouth_boot
+    unset extra
 }
 
 check_profile(){
@@ -554,7 +561,20 @@ load_pkgs(){
         ;;
     esac
 
-    local _multi _nonfree_default _nonfree_multi _arch _arch_rm _nonfree_i686 _nonfree_x86_64
+    local _multi _nonfree_default _nonfree_multi _arch _arch_rm _nonfree_i686 _nonfree_x86_64 _basic _basic_rm _extra _extra_rm
+
+    if ${basic};then
+        _basic="s|>basic||g"
+    else
+        _basic_rm="s|>basic.*||g"
+    fi
+
+    if ${extra};then
+        _extra="s|>extra||g"
+    else
+        _extra_rm="s|>extra.*||g"
+    fi
+
     case "${target_arch}" in
         "i686")
             _arch="s|>i686||g"
@@ -638,6 +658,10 @@ load_pkgs(){
             | sed "$_kernel" \
             | sed "$_edition" \
             | sed "$_edition_rm" \
+            | sed "$_basic" \
+            | sed "$_basic_rm" \
+            | sed "$_extra" \
+            | sed "$_extra_rm" \
             | sed "$_clean")
 
     if [[ $1 == "${packages_mhwd}" ]]; then
