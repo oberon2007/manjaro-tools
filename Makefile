@@ -56,9 +56,8 @@ SHARED_PKG = \
 
 LIST_ISO = \
 	data/iso.list.d/default.list \
-	data/iso.list.d/official.list \
+	data/iso.list.d/manjaro.list \
 	data/iso.list.d/community.list \
-	data/iso.list.d/minimal.list \
 	data/iso.list.d/sonar.list
 
 BIN_ISO = \

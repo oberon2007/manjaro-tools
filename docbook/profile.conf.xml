@@ -116,6 +116,42 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
             </varlistentry>
 
             <varlistentry>
+                <term><varname>basic=</varname></term>
+
+                <listitem><para>Accepts
+                        <option>true</option> (the default)
+                        <option>false</option>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><varname>extra=</varname></term>
+
+                <listitem><para>Accepts
+                        <option>false</option> (the default)
+                        <option>false</option>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><varname>pxe_boot=</varname></term>
+
+                <listitem><para>Accepts
+                        <option>true</option> (the default)
+                        <option>false</option>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><varname>multilib=</varname></term>
+
+                <listitem><para>Accepts
+                        <option>true</option> (the default)
+                        <option>false</option>.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><varname>geoip=</varname></term>
 
                 <listitem><para>Accepts
