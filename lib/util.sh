@@ -136,8 +136,8 @@ show_elapsed_time(){
 get_project(){
     local project
     case "$1" in
-        'community'|'minimal') project='manjarolinux-community' ;;
-        'official') project='manjarolinux' ;;
+        'community') project='manjarolinux-community' ;;
+        'manjaro') project='manjarolinux' ;;
         'sonar') project='sonargnulinux' ;;
     esac
     echo ${project}
@@ -378,10 +378,7 @@ check_profile_vars(){
 
 get_svc(){
     local service=${displaymanager}
-    case $service in
-        'sddm'|'lxdm') service="$service" ;;
-        *) ${plymouth_boot} && service="$service-plymouth" ;;
-    esac
+    ${plymouth_boot} && service="$service-plymouth"
     echo $service
 }
 
