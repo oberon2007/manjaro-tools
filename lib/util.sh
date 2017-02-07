@@ -137,7 +137,7 @@ get_project(){
     local project
     case "$1" in
         'community') project='manjarolinux-community' ;;
-        'manjaro') project='manjarolinux' ;;
+        'manjaro') [[ ${dev_cycle} == 'development' ]] && project='manjarotest' || project='manjarolinux' ;;
         'sonar') project='sonargnulinux' ;;
     esac
     echo ${project}
@@ -315,6 +315,8 @@ init_buildiso(){
 init_deployiso(){
 
     [[ -z ${account} ]] && account="[SetUser]"
+    
+    [[ -z ${dev_cycle} ]] && dev_cycle='development'
 
     [[ -z ${limit} ]] && limit=100
 }
@@ -784,6 +786,13 @@ is_valid_arch_iso(){
 is_valid_branch(){
     case $1 in
         'stable'|'testing'|'unstable') return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+is_valid_dev_cycle(){
+    case $1 in
+        'development'|'candidates'|'release') return 0 ;;
         *) return 1 ;;
     esac
 }
