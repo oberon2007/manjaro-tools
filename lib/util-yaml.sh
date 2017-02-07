@@ -382,6 +382,7 @@ write_netgroup_yaml(){
     echo "  description: '$1'" >> "$2"
     echo "  selected: false" >> "$2"
     echo "  hidden: false" >> "$2"
+    echo "  critical: false" >> "$2"
     echo "  packages:" >> "$2"
     for p in ${packages[@]};do
         echo "       - $p" >> "$2"
