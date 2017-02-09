@@ -40,7 +40,7 @@ prepare_transfer(){
 sync_dir(){
     prepare_transfer "$1"
     if ${release} && ! ${exists};then
-        create_release
+        create_release "$1"
         exists=true
     fi
     msg "Start upload [%s] --> [${project}] ..." "$1"
