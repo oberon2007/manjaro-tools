@@ -17,10 +17,9 @@ create_release(){
 }
 
 get_edition(){
-    local result=$(find ${run_dir} -maxdepth 3 -name "$1") path
+    local result=$(find ${run_dir} -maxdepth 2 -name "$1") path
     [[ -z $result ]] && die "%s is not a valid profile or build list!" "$1"
     path=${result%/*}
-    path=${path%/*}
     echo ${path##*/}
 }
 
