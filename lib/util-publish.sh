@@ -9,18 +9,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-
-get_rel_dir(){
-    [[ ${project} == 'manjarotest' ]] && rel_dir="${dist_release}" || rel_dir="${dev_cycle}/${dist_release}"
-    echo "${rel_dir}"
-}
-
 create_release(){
-    rel_dir=$(get_rel_dir)
-    msg "Create release (%s) ..." "${rel_dir}"
-    rsync ${rsync_args[*]} /dev/null ${url}/${rel_dir}/
+    msg "Create release (%s) ..." "${dist_release}"
+    rsync ${rsync_args[*]} /dev/null ${url}/${dist_release}/
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
-    msg "Done (%s)" "${rel_dir}"
+    msg "Done (%s)" "${dist_release}"
 }
 
 get_edition(){
@@ -29,12 +22,6 @@ get_edition(){
     path=${result%/*}
     path=${path%/*}
     echo ${path##*/}
-}
-
-check_dev_cycle(){
-    if ! $(is_valid_dev_cycle ${dev_cycle}); then
-        die "%s is not a valid development cycle!" "${dev_cycle}"
-    fi
 }
 
 connect(){
@@ -46,8 +33,8 @@ prepare_transfer(){
     local edition=$(get_edition $1)
     project=$(get_project "${edition}")
     url=$(connect "${project}")
-    src_dir="${run_dir}/${edition}/${dist_release}/$1"
-    target_dir=$(get_rel_dir)/$1
+    target_dir="${dist_release}/$1"
+    src_dir="${run_dir}/${edition}/${target_dir}"
 }
 
 sync_dir(){

@@ -127,10 +127,6 @@ overriding
 # the server user
 # account=[SetUser]
 
-# the development cycle; possible values: development,candidates,release
-# default: development
-# dev_cycle=development
-
 # set upload bandwidth limit in kB/s
 # limit=100
 ~~~
