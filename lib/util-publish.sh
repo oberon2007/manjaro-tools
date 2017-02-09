@@ -30,7 +30,7 @@ connect(){
 
 prepare_transfer(){
     local edition=$(get_edition $1)
-    project=$(get_project "${edition}")
+    [[ -z ${remote_project} ]] && project=$(get_project "${edition}") || project=${remote_project}
     url=$(connect "${project}")
     target_dir="$1/${dist_release}"
     src_dir="${run_dir}/${edition}/${target_dir}"

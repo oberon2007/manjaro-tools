@@ -3,14 +3,14 @@
 
 _pkgbase=manjaro-tools
 _ver=0.14.0
-_branch=deployiso
+_branch=hybrid
 
 pkgbase=manjaro-tools-git
 pkgname=('manjaro-tools-base-git'
         'manjaro-tools-pkg-git'
         'manjaro-tools-iso-git'
         'manjaro-tools-yaml-git')
-pkgver=0.13.0.r324.gcf47596
+pkgver=0.13.0.r337.g8b785c5
 pkgrel=1
 arch=('any')
 pkgdesc='Development tools for Manjaro Linux'
