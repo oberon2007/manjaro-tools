@@ -10,10 +10,10 @@
 # GNU General Public License for more details.
 
 create_release(){
-    msg "Create release (%s) ..." "${dist_release}"
-    rsync ${rsync_args[*]} /dev/null ${url}/${dist_release}/
+    msg "Create release (%s) ..." "$1/${dist_release}"
+    rsync ${rsync_args[*]} /dev/null ${url}/$1/${dist_release}/
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
-    msg "Done (%s)" "${dist_release}"
+    msg "Done (%s)" "$1/${dist_release}"
 }
 
 get_edition(){
@@ -33,8 +33,8 @@ prepare_transfer(){
     local edition=$(get_edition $1)
     project=$(get_project "${edition}")
     url=$(connect "${project}")
-    target_dir="${dist_release}/$1"
-    src_dir="${run_dir}/${edition}/${target_dir}"
+    src_dir="${run_dir}/${edition}/${dist_release}/$1"
+    target_dir="$1/${dist_release}"
 }
 
 sync_dir(){
