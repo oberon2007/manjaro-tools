@@ -48,7 +48,6 @@ display_settings(){
     msg2 "rsync_args: %s" "${rsync_args[*]}"
 
     msg "REMOTE:"
-    msg2 "project: %s" "${project}"
     msg2 "account: %s" "${account}"
     msg2 "host: %s" "${host}"
 
