@@ -33,8 +33,8 @@ prepare_transfer(){
     local edition=$(get_edition $1)
     project=$(get_project "${edition}")
     url=$(connect "${project}")
-    src_dir="${run_dir}/${edition}/${dist_release}/$1"
     target_dir="$1/${dist_release}"
+    src_dir="${run_dir}/${edition}/${target_dir}"
 }
 
 sync_dir(){
