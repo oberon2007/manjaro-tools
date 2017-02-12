@@ -243,7 +243,7 @@ get_yaml(){
     if ${chrootcfg};then
         args+=('chrootcfg')
     else
-        args+=("packages")
+        args+=("${profile}/packages")
     fi
     args+=("${initsys}")
     [[ ${edition} == 'sonar' ]] && args+=("${edition}")

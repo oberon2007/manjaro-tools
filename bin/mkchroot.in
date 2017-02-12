@@ -106,6 +106,7 @@ else
 fi
 
 echo "$version" > "$working_dir/.manjaro-tools"
+echo "$(date)" > "$working_dir/.timestamp"
 
 if ${build_locales};then
     info "Using build locales ..."

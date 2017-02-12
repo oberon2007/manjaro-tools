@@ -133,6 +133,16 @@ show_elapsed_time(){
     info "Time %s: %s minutes" "$1" "$(elapsed_time $2)"
 }
 
+get_project(){
+    local project
+    case "$1" in
+        'community') [[ "${dist_release}" =~ [a-z] ]] && project='manjarotest-community' || project='manjarolinux-community' ;;
+        'manjaro') [[ "${dist_release}" =~ [a-z] ]] && project='manjarotest' || project='manjarolinux' ;;
+        'sonar') project='sonargnulinux' ;;
+    esac
+    echo ${project}
+}
+
 lock() {
     eval "exec $1>"'"$2"'
     if ! flock -n $1; then
@@ -438,9 +448,7 @@ load_profile_config(){
 
     [[ -z ${chrootcfg} ]] && chrootcfg='false'
 
-    #[[ -z ${netgroups} ]] && -- needs to be hardcoded for now, until a standard has been established
-    # will be unlocked again after everything has been established.
-    netgroups="https://raw.githubusercontent.com/manjaro/calamares-netgroups/master"
+    [[ -z ${netgroups} ]] && netgroups="https://raw.githubusercontent.com/manjaro/calamares-netgroups/master"
 
     [[ -z ${geoip} ]] && geoip='true'
 
