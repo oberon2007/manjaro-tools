@@ -462,18 +462,9 @@ check_requirements(){
     import ${LIBDIR}/util-iso-${iso_fs}.sh
 }
 
-
-make_torrent(){
-    local fn=${iso_file}.torrent
-    msg2 "Creating (%s) ..." "${fn}"
-    [[ -f ${iso_dir}/${fn} ]] && rm ${iso_dir}/${fn}
-    mktorrent ${mktorrent_args[*]} -o ${iso_dir}/${fn} ${iso_dir}/${iso_file}
-}
-
 compress_images(){
     local timer=$(get_timer)
     run_safe "make_iso"
-    ${torrent} && make_torrent
     user_own "${iso_dir}" "-R"
     show_elapsed_time "${FUNCNAME}" "${timer}"
 }
@@ -555,18 +546,6 @@ get_pacman_conf(){
     echo "$conf"
 }
 
-gen_webseed(){
-    local webseed url project=$(get_project "${edition}")
-        url=${host}/project/${project}/${dist_release}/${profile}/${iso_file}
-
-        local mirrors=('heanet' 'jaist' 'netcologne' 'iweb' 'kent')
-
-    for m in ${mirrors[@]};do
-        webseed=${webseed:-}${webseed:+,}"http://${m}.dl.${url}"
-    done
-    echo ${webseed}
-}
-
 load_profile(){
     conf="${profile_dir}/profile.conf"
 
@@ -591,8 +570,6 @@ load_profile(){
 
     prepare_dir "${iso_dir}"
     user_own "${iso_dir}"
-
-    mktorrent_args=(-v -p -l ${piece_size} -a ${tracker_url} -w $(gen_webseed))
 }
 
 prepare_profile(){

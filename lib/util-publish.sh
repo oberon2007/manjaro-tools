@@ -28,12 +28,44 @@ connect(){
     echo "${account},$1@frs.${host}:${home}/$1"
 }
 
+get_project(){
+    local project
+    case "$1" in
+        'community') project='manjarolinux-community' ;;
+        'manjaro') project='manjarolinux' ;;
+        'sonar') project='sonargnulinux' ;;
+    esac
+    echo ${project}
+}
+
+gen_webseed(){
+    local webseed url project=$(get_project "${edition}")
+        url=${host}/project/${project}/${dist_release}/${profile}/${iso_file}
+
+        local mirrors=('heanet' 'jaist' 'netcologne' 'iweb' 'kent')
+
+    for m in ${mirrors[@]};do
+        webseed=${webseed:-}${webseed:+,}"http://${m}.dl.${url}"
+    done
+    echo ${webseed}
+}
+
+make_torrent(){
+    local fn=${iso_file}.torrent
+    msg2 "Creating (%s) ..." "${fn}"
+    [[ -f ${iso_dir}/${fn} ]] && rm ${iso_dir}/${fn}
+    mktorrent ${mktorrent_args[*]} -o ${iso_dir}/${fn} ${iso_dir}/${iso_file}
+}
+
 prepare_transfer(){
     local edition=$(get_edition $1)
     [[ -z ${remote_project} ]] && project=$(get_project "${edition}") || project=${remote_project}
     url=$(connect "${project}")
+    mktorrent_args=(-v -p -l ${piece_size} -a ${tracker_url} -w $(gen_webseed))
+
     target_dir="$1/${dist_release}"
     src_dir="${run_dir}/${edition}/${target_dir}"
+    ${torrent} && make_torrent
 }
 
 sync_dir(){

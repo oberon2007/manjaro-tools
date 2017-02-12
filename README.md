@@ -129,6 +129,12 @@ overriding
 
 # set upload bandwidth limit in kB/s
 # limit=100
+
+# the torrent tracker urls, comma separated
+# tracker_url='udp://mirror.strits.dk:6969'
+
+# Piece size, 2^n
+# piece_size=21
 ~~~
 
 ###2. buildpkg
@@ -222,7 +228,6 @@ Usage: buildiso [options]
     -x                 Build images only
     -z                 Generate iso only
                        Requires pre built images (-x)
-    -w                 Create iso torrent
     -v                 Verbose output to log file, show profile detail (-q)
     -q                 Query settings and pretend build
     -h                 This help
@@ -371,6 +376,7 @@ Usage: deployiso [options]
     -l                 Limit bandwidth in kB/s [default:80]
     -c                 Create new remote release directory
     -u                 Update remote directory
+    -t                 Create iso torrent
     -q                 Query settings and pretend upload
     -v                 Verbose output
     -h                 This help

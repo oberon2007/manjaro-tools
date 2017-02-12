@@ -96,6 +96,12 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
             </varlistentry>
 
             <varlistentry>
+                <term><option>-w</option></term>
+
+                <listitem><para>Create a torrent from iso file.</para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
 
                 <listitem><para>Verbose output.</para></listitem>

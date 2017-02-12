@@ -46,6 +46,12 @@ display_settings(){
     msg2 "release: %s" "${release}"
     msg2 "verbose: %s" "${verbose}"
     msg2 "rsync_args: %s" "${rsync_args[*]}"
+    msg2 "torrent: %s" "${torrent}"
+
+    if ${torrent};then
+        msg2 "tracker_url: %s" "${tracker_url}"
+        msg2 "piece_size: %s" "${piece_size}"
+    fi
 
     msg "REMOTE:"
     msg2 "account: %s" "${account}"
@@ -66,6 +72,7 @@ release=false
 update=false
 verbose=false
 exists=false
+torrent=false
 
 rsync_args=(-aP --progress -e ssh)
 
@@ -75,6 +82,7 @@ usage() {
     echo "    -l                 Limit bandwidth in kB/s [default:${limit}]"
     echo '    -c                 Create new remote release directory'
     echo '    -u                 Update remote directory'
+    echo '    -t                 Create iso torrent'
     echo '    -q                 Query settings and pretend upload'
     echo '    -v                 Verbose output'
     echo '    -h                 This help'
@@ -83,7 +91,7 @@ usage() {
     exit $1
 }
 
-opts='p:l:cuvqh'
+opts='p:l:cuvtqh'
 
 while getopts "${opts}" arg; do
     case "${arg}" in
@@ -91,6 +99,7 @@ while getopts "${opts}" arg; do
                 l) limit="$OPTARG" ;;
                 c) release=true ;;
                 u) update=true; rsync_args+=(-u) ;;
+                t) torrent=true ;;
                 v) verbose=true; rsync_args+=(-v --stats) ;;
         q) pretend=true; rsync_args+=(-n) ;;
         h|?) usage 0 ;;

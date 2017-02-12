@@ -317,6 +317,10 @@ init_deployiso(){
     [[ -z ${account} ]] && account="[SetUser]"
 
     [[ -z ${limit} ]] && limit=100
+
+    [[ -z ${tracker_url} ]] && tracker_url='udp://mirror.strits.dk:6969'
+
+    [[ -z ${piece_size} ]] && piece_size=21
 }
 
 load_config(){
@@ -440,10 +444,6 @@ load_profile_config(){
         enable_systemd+=("$(get_svc)")
     fi
 
-    [[ -z ${tracker_url} ]] && tracker_url='udp://mirror.strits.dk:6969'
-
-    [[ -z ${piece_size} ]] && piece_size=21
-
     [[ -z ${netinstall} ]] && netinstall='false'
 
     [[ -z ${chrootcfg} ]] && chrootcfg='false'
@@ -492,8 +492,6 @@ reset_profile(){
     unset packages_desktop
     unset packages_mhwd
     unset login_shell
-    unset tracker_url
-    unset piece_size
     unset netinstall
     unset chrootcfg
     unset netgroups

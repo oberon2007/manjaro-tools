@@ -1,0 +1,7 @@
+# srv path : version attribute
+
+release:none
+
+candidates:rc[0-9]
+
+development:alpha,beta
