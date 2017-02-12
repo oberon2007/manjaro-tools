@@ -238,8 +238,6 @@ make_image_root() {
         pacman -Qr "${path}" > "${path}/rootfs-pkgs.txt"
         copy_overlay "${profile_dir}/root-overlay" "${path}"
 
-        prepare_initcpio "${path}"
-
         reset_pac_conf "${path}"
 
         configure_lsb "${path}"
@@ -351,6 +349,8 @@ make_image_boot() {
         else
             mount_fs_net "${path}"
         fi
+
+        prepare_initcpio "${path}"
 
 #         if [[ ${gpg_key} ]]; then
 #             gpg --export ${gpg_key} >${work_dir}/gpgkey
