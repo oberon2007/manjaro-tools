@@ -9,17 +9,17 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-# get_project(){
-#     local project
-#     case "$1" in
-#         'community') project='manjarolinux-community' ;;
-#         'manjaro') project='manjarolinux' ;;
-#         'sonar') project='sonargnulinux' ;;
-#         # manjarotest
-#         # manjarotest-community
-#     esac
-#     echo ${project}
-# }
+get_project(){
+    local project
+    case "$1" in
+        'community') project='manjarolinux-community' ;;
+        'manjaro') project='manjarolinux' ;;
+        'sonar') project='sonargnulinux' ;;
+        # manjarotest
+        # manjarotest-community
+    esac
+    echo ${project}
+}
 
 create_release(){
     msg "Create release (%s) ..." "${target_dir}"
@@ -33,6 +33,7 @@ get_edition(){
     local result=$(find ${run_dir} -maxdepth 3 -name "${profile}") path
     [[ -z $result ]] && die "%s is not a valid profile or build list!" "${profile}"
     path=${result%/*}
+    path=${path%/*}
     echo ${path##*/}
 }
 
@@ -64,6 +65,7 @@ make_torrent(){
 
 prepare_transfer(){
     edition=$(get_edition)
+    project=$(get_project "${edition}")
     url=$(connect)
 
     target_dir="${profile}/${dist_release}"
@@ -75,10 +77,10 @@ sync_dir(){
     profile="$1"
     prepare_transfer "${profile}"
     if ${release} && ! ${exists};then
-        create_release "$1"
+        create_release
         exists=true
     fi
-    msg "Start upload [%s] --> [${project}] ..." "$1"
+    msg "Start upload [%s] --> [${project}] ..." "${profile}"
     rsync ${rsync_args[*]} ${src_dir}/ ${url}/${target_dir}/
     msg "Done upload [%s]" "${profile}"
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
