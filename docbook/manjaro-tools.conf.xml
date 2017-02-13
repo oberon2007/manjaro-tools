@@ -261,21 +261,6 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
             </para></listitem>
         </varlistentry>
 
-        <varlistentry>
-            <term><varname>tracker_url=</varname></term>
-
-            <listitem><para>Default tracker announce for the torrent.
-                    The tracker url can also contain comma separated urls.
-                    </para></listitem>
-        </varlistentry>
-
-        <varlistentry>
-            <term><varname>piece_size=</varname></term>
-
-            <listitem><para>Default priece size for the torrent in 2^n.
-                    </para></listitem>
-        </varlistentry>
-
         </variablelist>
     </refsect1>
 
@@ -294,12 +279,41 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
             </varlistentry>
 
             <varlistentry>
+                <term><varname>torrent_meta=</varname></term>
+
+                <listitem><para>Default meta comment for the torrent.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><varname>limit=</varname></term>
 
                 <listitem><para>Default upload bandwidth limit in kb/s.
                 </para></listitem>
             </varlistentry>
 
+             <varlistentry>
+            <term><varname>tracker_url=</varname></term>
+
+            <listitem><para>Default tracker announce for the torrent.
+                    The tracker url can also contain comma separated urls.
+                    </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><varname>piece_size=</varname></term>
+
+                <listitem><para>Default priece size for the torrent in 2^n.
+                        </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><varname>iso_mirrors=</varname></term>
+
+                <listitem><para>Array of iso mirrors that will be
+                used for webseeds.
+                </para></listitem>
+            </varlistentry>
 
         </variablelist>
     </refsect1>

@@ -61,7 +61,7 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
 
         <para>With buildiso you can build ISOs suitable to be booted from a removable media
         like a DVD o a USB Stick, it will automatically create the necessary files to
-        install this ISO using calamares or the cli installer.</para>
+        install this ISO using calamares.</para>
 
     </refsect1>
 

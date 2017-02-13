@@ -313,6 +313,10 @@ init_deployiso(){
     [[ -z ${tracker_url} ]] && tracker_url='udp://mirror.strits.dk:6969'
 
     [[ -z ${piece_size} ]] && piece_size=21
+
+    [[ -z ${iso_mirrors[@]} ]] && iso_mirrors=('heanet' 'jaist' 'netcologne' 'iweb' 'kent')
+
+    [[ -z ${torrent_meta} ]] && torrent_meta="ManjaroLinux"
 }
 
 load_config(){

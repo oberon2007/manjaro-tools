@@ -2,6 +2,4 @@
 
 release:none
 
-candidates:rc[0-9]
-
-development:alpha,beta
+development:alpha[0-9],beta[0-9],rc[0-9]

@@ -135,6 +135,12 @@ overriding
 
 # Piece size, 2^n
 # piece_size=21
+
+# torrent meta comment
+# torrent_meta="ManjaroLinux"
+
+# iso mirrors
+# iso_mirrors=('heanet' 'jaist' 'netcologne' 'iweb' 'kent')
 ~~~
 
 ###2. buildpkg
@@ -203,7 +209,6 @@ buildiso is used to build manjaro-iso-profiles. It is run insde the profiles fol
 
 #####Packages for livecd only:
 
-* manjaro-livecd-cli-installer
 * manjaro-livecd-openrc
 * manjaro-livecd-systemd
 

@@ -43,26 +43,27 @@ connect(){
 
 gen_webseed(){
     local webseed seed="$1"
-    local mirrors=('heanet' 'jaist' 'netcologne' 'iweb' 'kent')
-    for m in ${mirrors[@]};do
-        webseed=${webseed:-}${webseed:+,}"http://${m}.dl.${seed}"
+    for mirror in ${iso_mirrors[@]};do
+        webseed=${webseed:-}${webseed:+,}"http://${mirror}.dl.${seed}"
     done
     echo ${webseed}
 }
 
 make_torrent(){
     rm ${src_dir}/*.iso.torrent
+
     for iso in $(ls ${src_dir}/*.iso);do
 
-        local seed=${host}/project/${project}/${target_dir}/${iso}
-        local mktorrent_args=(-v -p -l ${piece_size} -a ${tracker_url} -w $(gen_webseed ${seed}))
+        local seed=${host}/project/${project}/${target_dir}/${iso##*/}
+        local mktorrent_args=(-c "${torrent_meta}" -v -p -l ${piece_size} -a ${tracker_url} -w $(gen_webseed ${seed}))
 
-        msg2 "Creating (%s) ..." "${iso}.torrent"
-        mktorrent ${mktorrent_args[*]} -o ${src_dir}/${iso}.torrent ${src_dir}/${iso}
+        msg2 "Creating (%s) ..." "${iso##*/}.torrent"
+        mktorrent ${mktorrent_args[*]} -o ${iso}.torrent ${iso}
     done
 }
 
 prepare_transfer(){
+    profile="$1"
     edition=$(get_edition)
     url=$(connect)
 
@@ -72,14 +73,13 @@ prepare_transfer(){
 }
 
 sync_dir(){
-    profile="$1"
-    prepare_transfer "${profile}"
+    prepare_transfer "$1"
     if ${release} && ! ${exists};then
         create_release
         exists=true
     fi
     msg "Start upload [%s] --> [${project}] ..." "${profile}"
     rsync ${rsync_args[*]} ${src_dir}/ ${url}/${target_dir}/
-    msg "Done upload [%s]" "${profile}"
+    msg "Done upload [%s]" "$1"
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
 }

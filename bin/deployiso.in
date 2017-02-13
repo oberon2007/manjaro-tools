@@ -23,7 +23,6 @@ show_profile(){
     profile="$1"
     prepare_transfer "$1"
     info "Profile: [$1]"
-    msg2 "project: %s" "${project}"
     msg2 "src_dir: ${src_dir}"
     msg2 "target_dir: ${target_dir}"
 }
@@ -46,17 +45,20 @@ display_settings(){
     msg2 "update: %s" "${update}"
     msg2 "release: %s" "${release}"
     msg2 "verbose: %s" "${verbose}"
-    msg2 "rsync_args: %s" "${rsync_args[*]}"
+#     msg2 "rsync_args: %s" "${rsync_args[*]}"
     msg2 "torrent: %s" "${torrent}"
 
     if ${torrent};then
         msg2 "tracker_url: %s" "${tracker_url}"
         msg2 "piece_size: %s" "${piece_size}"
+        msg2 "iso_mirrors: %s" "${iso_mirrors[*]}"
+        msg2 "torrent_meta: %s" "${torrent_meta}"
     fi
 
     msg "REMOTE:"
     msg2 "account: %s" "${account}"
     msg2 "host: %s" "${host}"
+    msg2 "project: %s" "${project}"
 
     msg "UPLOAD QUEUE:"
     run show_profile "${build_list_iso}"
