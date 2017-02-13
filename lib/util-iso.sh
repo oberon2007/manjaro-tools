@@ -513,10 +513,6 @@ make_profile(){
         ${verbose} && archive_logs
         exit 1
     fi
-#     if ${boot_only}; then
-#         prepare_boot_loaders
-#         exit 1
-#     fi
     if ${images_only}; then
         prepare_images
         ${verbose} && archive_logs

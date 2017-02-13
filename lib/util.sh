@@ -228,8 +228,6 @@ init_common(){
     [[ -z ${build_mirror} ]] && build_mirror='http://mirror.netzspielplatz.de/manjaro/packages'
 
     [[ -z ${tmp_dir} ]] && tmp_dir='/tmp/manjaro-tools'
-
-    [[ -z ${host} ]] && host="sourceforge.net"
 }
 
 init_buildtree(){
@@ -313,6 +311,10 @@ init_buildiso(){
 }
 
 init_deployiso(){
+
+    host="sourceforge.net"
+
+    [[ -z ${project} ]] && project="manjarolinux"
 
     [[ -z ${account} ]] && account="[SetUser]"
 
@@ -497,6 +499,7 @@ reset_profile(){
     unset netgroups
     unset geoip
     unset plymouth_boot
+    unset basic
     unset extra
 }
 
