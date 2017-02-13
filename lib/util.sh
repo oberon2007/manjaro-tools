@@ -133,16 +133,6 @@ show_elapsed_time(){
     info "Time %s: %s minutes" "$1" "$(elapsed_time $2)"
 }
 
-get_project(){
-    local project
-    case "$1" in
-        'community') [[ "${dist_release}" =~ [a-z] ]] && project='manjarotest-community' || project='manjarolinux-community' ;;
-        'manjaro') [[ "${dist_release}" =~ [a-z] ]] && project='manjarotest' || project='manjarolinux' ;;
-        'sonar') project='sonargnulinux' ;;
-    esac
-    echo ${project}
-}
-
 lock() {
     eval "exec $1>"'"$2"'
     if ! flock -n $1; then

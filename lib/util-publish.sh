@@ -9,17 +9,17 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-get_project(){
-    local project
-    case "$1" in
-        'community') project='manjarolinux-community' ;;
-        'manjaro') project='manjarolinux' ;;
-        'sonar') project='sonargnulinux' ;;
-        # manjarotest
-        # manjarotest-community
-    esac
-    echo ${project}
-}
+#get_project(){
+#    local project
+#    case "$1" in
+#        'community') project='manjarolinux-community' ;;
+#        'manjaro') project='manjarolinux' ;;
+#        'sonar') project='sonargnulinux' ;;
+#        # manjarotest
+#        # manjarotest-community
+#    esac
+#    echo ${project}
+#}
 
 create_release(){
     msg "Create release (%s) ..." "${target_dir}"
@@ -65,7 +65,6 @@ make_torrent(){
 
 prepare_transfer(){
     edition=$(get_edition)
-    project=$(get_project "${edition}")
     url=$(connect)
 
     target_dir="${profile}/${dist_release}"
