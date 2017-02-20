@@ -2,16 +2,15 @@
 # Maintainer: Philip Müller <philm@manjaro.org>
 
 _pkgbase=manjaro-tools
-_ver=0.14.0
+_ver=0.14.2
 _branch=hybrid
-_commit=e69d9bf6bd8f130273fee2f3c82a2f4c0f825387
 
 pkgbase=manjaro-tools-git
 pkgname=('manjaro-tools-base-git'
         'manjaro-tools-pkg-git'
         'manjaro-tools-iso-git'
         'manjaro-tools-yaml-git')
-pkgver=0.13.0.r341.gc8b3612
+pkgver=r2503.4671735
 pkgrel=1
 arch=('any')
 pkgdesc='Development tools for Manjaro Linux'
@@ -20,7 +19,6 @@ groups=('manjaro-tools')
 url='https://github.com/oberon2007/manjaro-tools'
 makedepends=('git' 'docbook2x')
 source=("git+$url.git#branch=$_branch")
-#source=("git+$url.git#commit=$_commit")
 sha256sums=('SKIP')
 
 prepare() {
@@ -32,7 +30,7 @@ prepare() {
 
 pkgver() {
     cd ${srcdir}/${_pkgbase}
-    git describe --long | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
 build() {
@@ -84,3 +82,4 @@ package_manjaro-tools-iso-git() {
 	cd ${srcdir}/${_pkgbase}
 	make SYSCONFDIR=/etc PREFIX=/usr DESTDIR=${pkgdir} install_iso
 }
+

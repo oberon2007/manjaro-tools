@@ -301,7 +301,7 @@ init_buildiso(){
 
     [[ -z ${dist_release} ]] && dist_release=$(get_release)
 
-    dist_codename=$(get_codename)
+    [[ -z ${dist_codename} ]] && dist_codename=$(get_codename)
 
     dist_name=$(get_distname)
 
