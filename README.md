@@ -88,29 +88,14 @@ overriding
 
 ################ buildiso ################
 
-# the name of the profiles directory
-# profile_repo='manjaro-tools-iso-profiles'
-
 # default iso build list; name without .list extension
 # build_list_iso=default
-
-# the dist name; default: Manjaro
-# dist_name="Manjaro"
 
 # the dist release; default: auto
 # dist_release=17.0
 
-# the codename; defaults to value sourced from /etc/lsb-release
-# dist_codename="Gellivara"
-
 # the branding; default: auto
 # dist_branding="MJRO"
-
-# iso publisher
-# iso_publisher="Manjaro Linux <http://www.manjaro.org>"
-
-# iso app id
-# iso_app_id="Manjaro Linux Live/Rescue CD"
 
 # possible values: openrc,systemd
 # initsys="systemd"
@@ -121,6 +106,9 @@ overriding
 # experimental; use overlayfs instead of aufs
 # requires minimum 4.0 kernel on the build host and on iso in profile.conf
 # use_overlayfs="false"
+
+# gpg key; leave empty or commented to skip sfs signing
+# gpgkey=""
 
 ################ deployiso ################
 
@@ -135,9 +123,6 @@ overriding
 
 # Piece size, 2^n
 # piece_size=21
-
-# torrent meta comment
-# torrent_meta="ManjaroLinux"
 
 # iso mirrors
 # iso_mirrors=('heanet' 'jaist' 'netcologne' 'iweb' 'kent')
@@ -225,10 +210,12 @@ Usage: buildiso [options]
     -t <dir>           Target directory
                        [default: /var/cache/manjaro-tools/iso]
     -k <name>          Kernel to use
-                       [default: linux44]
+                       [default: linux49]
     -i <name>          Init system to use
                        [default: systemd]
-    -s                 Sign the iso
+    -g <key>           The gpg key for sfs signing
+                       [default: empty]
+    -m                 Set SquashFS image mode to persistence
     -c                 Disable clean work dir
     -x                 Build images only
     -z                 Generate iso only

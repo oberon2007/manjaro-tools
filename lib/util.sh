@@ -186,12 +186,6 @@ prepare_dir(){
     [[ ! -d $1 ]] && mkdir -p $1
 }
 
-version_gen(){
-    local y=$(date +%Y) m=$(date +%m) ver
-    ver=${y:2}.$m
-    echo $ver
-}
-
 # $1: chroot
 get_branch(){
     echo $(cat "$1/etc/pacman-mirrors.conf" | grep '^Branch = ' | sed 's/Branch = \s*//g')
@@ -260,6 +254,36 @@ get_codename(){
     echo "${DISTRIB_CODENAME}"
 }
 
+get_release(){
+    source /etc/lsb-release
+    echo "${DISTRIB_RELEASE}"
+}
+
+get_distname(){
+    source /etc/lsb-release
+    echo "${DISTRIB_ID%Linux}"
+}
+
+get_distid(){
+    source /etc/lsb-release
+    echo "${DISTRIB_ID}"
+}
+
+get_disturl(){
+    source /etc/os-release
+    echo "${HOME_URL}"
+}
+
+get_osname(){
+    source /etc/os-release
+    echo "${NAME}"
+}
+
+get_osid(){
+    source /etc/os-release
+    echo "${ID}"
+}
+
 init_buildiso(){
     chroots_iso="${chroots_dir}/buildiso"
 
@@ -271,23 +295,21 @@ init_buildiso(){
 
     cache_dir_iso="${cache_dir}/iso"
 
+    profile_repo='iso-profiles'
+
     ##### iso settings #####
 
-    [[ -z ${dist_release} ]] && dist_release=$(version_gen)
+    [[ -z ${dist_release} ]] && dist_release=$(get_release)
 
-    [[ -z ${dist_codename} ]] && dist_codename=$(get_codename)
+    dist_codename=$(get_codename)
+
+    dist_name=$(get_distname)
+
+    iso_name=$(get_osid)
 
     [[ -z ${dist_branding} ]] && dist_branding="MJRO"
 
-    [[ -z ${dist_name} ]] && dist_name="Manjaro"
-
-    iso_name=${dist_name,,}
-
     iso_label=$(get_iso_label "${dist_branding}${dist_release//.}")
-
-    [[ -z ${iso_publisher} ]] && iso_publisher='Manjaro Linux <http://www.manjaro.org>'
-
-    [[ -z ${iso_app_id} ]] && iso_app_id='Manjaro Linux Live/Rescue CD'
 
     [[ -z ${initsys} ]] && initsys="systemd"
 
@@ -295,7 +317,7 @@ init_buildiso(){
 
     [[ -z ${use_overlayfs} ]] && use_overlayfs='true'
 
-    [[ -z ${profile_repo} ]] && profile_repo='iso-profiles'
+    [[ -z ${gpgkey} ]] && gpgkey=''
 
     mhwd_repo="/opt/pkg"
 }
@@ -304,7 +326,7 @@ init_deployiso(){
 
     host="sourceforge.net"
 
-    [[ -z ${project} ]] && project="manjarolinux"
+    [[ -z ${project} ]] && project="[SetProject]"
 
     [[ -z ${account} ]] && account="[SetUser]"
 
@@ -316,7 +338,7 @@ init_deployiso(){
 
     [[ -z ${iso_mirrors[@]} ]] && iso_mirrors=('heanet' 'jaist' 'netcologne' 'iweb' 'kent')
 
-    [[ -z ${torrent_meta} ]] && torrent_meta="ManjaroLinux"
+    torrent_meta="$(get_distid)"
 }
 
 load_config(){
@@ -680,11 +702,11 @@ clean_dir(){
 }
 
 write_repo_conf(){
-    local repos=$(find $USER_HOME -type f -name ".buildiso")
+    local repos=$(find $USER_HOME -type f -name "repo_info")
     local path name
     [[ -z ${repos[@]} ]] && run_dir=${DATADIR}/iso-profiles && return 1
     for r in ${repos[@]}; do
-        path=${r%/.*}
+        path=${r%/repo_info}
         name=${path##*/}
         echo "run_dir=$path" > ${USERCONFDIR}/$name.conf
     done
@@ -716,11 +738,10 @@ show_version(){
 
 show_config(){
     if [[ -f ${USERCONFDIR}/manjaro-tools.conf ]]; then
-        msg2 "user_config: %s" "${USERCONFDIR}/manjaro-tools.conf"
+        msg2 "config: %s" "~/.config/manjaro-tools/manjaro-tools.conf"
     else
-        msg2 "manjaro_tools_conf: %s" "${manjaro_tools_conf}"
+        msg2 "config: %s" "${manjaro_tools_conf}"
     fi
-    msg2 "log_dir: %s" "${log_dir}"
 }
 
 # $1: chroot

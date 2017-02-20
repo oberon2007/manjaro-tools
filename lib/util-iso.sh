@@ -71,7 +71,9 @@ trap_exit() {
 make_sig () {
     msg2 "Creating signature file..."
     cd "$1"
-    gpg --detach-sign --default-key ${gpg_key} $2.sfs
+    user_own "$1"
+    su ${OWNER} -c "gpg --detach-sign --default-key ${gpgkey} $2.sfs"
+    chown -R root "$1"
     cd ${OLDPWD}
 }
 
@@ -150,12 +152,16 @@ make_sfs() {
     make_checksum "${dest}" "${name}"
     ${persist} && rm "${src}.img"
 
+    if [[ -n ${gpgkey} ]];then
+        make_sig "${dest}" "${name}"
+    fi
+
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
 }
 
 assemble_iso(){
     msg "Creating ISO image..."
-    local efi_boot_args=()
+    local efi_boot_args=() iso_publisher iso_app_id
     if [[ -f "${iso_root}/EFI/miso/efiboot.img" ]]; then
         msg2 "Setting efi args. El Torito detected."
         efi_boot_args=("-eltorito-alt-boot"
@@ -163,6 +169,10 @@ assemble_iso(){
                 "-isohybrid-gpt-basdat"
                 "-no-emul-boot")
     fi
+
+    iso_publisher="$(get_osname) <$(get_disturl)>"
+
+    iso_app_id="$(get_osname) Live/Rescue CD"
 
     xorriso -as mkisofs \
         -iso-level 3 -rock -joliet \
@@ -351,18 +361,7 @@ make_image_boot() {
         fi
 
         prepare_initcpio "${path}"
-
-#         if [[ ${gpg_key} ]]; then
-#             gpg --export ${gpg_key} >${work_dir}/gpgkey
-#             exec 17<>${work_dir}/gpgkey
-#         fi
-#         MISO_GNUPG_FD=${gpg_key:+17}
-
         prepare_initramfs "${profile_dir}" "${path}"
-
-#         if [[ ${gpg_key} ]]; then
-#             exec 17<&-
-#         fi
 
         mv ${path}/boot/initramfs.img ${boot}/${target_arch}/initramfs.img
         prepare_boot_extras "${path}" "${boot}"
@@ -436,7 +435,7 @@ make_syslinux() {
 }
 
 check_requirements(){
-    [[ -f ${run_dir}/.buildiso ]] || die "%s is not a valid iso profiles directory!" "${run_dir}"
+    [[ -f ${run_dir}/repo_info ]] || die "%s is not a valid iso profiles directory!" "${run_dir}"
     if ! $(is_valid_arch_iso ${target_arch});then
         die "%s is not a valid arch!" "${target_arch}"
     fi

@@ -21,12 +21,8 @@ import ${LIBDIR}/util.sh
 
 show_profile(){
     prepare_profile "$1"
-    msg2 "pacman_conf: %s" "${pacman_conf}"
+    msg2 "iso_file: %s" "${iso_file}"
     if ${verbose};then
-        msg2 "work_dir: %s" "${work_dir}"
-        msg2 "iso_root: %s" "${iso_root}"
-        msg2 "iso_dir: %s" "${iso_dir}"
-        msg2 "iso_file: %s" "${iso_file}"
         msg2 "autologin: %s" "${autologin}"
         msg2 "nonfree_mhwd: %s" "${nonfree_mhwd}"
         msg2 "pxe_boot: %s" "${pxe_boot}"
@@ -69,19 +65,16 @@ display_settings(){
     show_config
 
     msg "PROFILE:"
-    msg2 "list_dir_iso: %s" "${list_dir_iso}"
     msg2 "build_lists: %s" "$(show_build_lists ${list_dir_iso})"
     msg2 "build_list_iso: %s" "${build_list_iso}"
     msg2 "is_build_list: %s" "${is_build_list}"
-    msg2 "build_mirror: %s" "${build_mirror}/${target_branch}"
-    ${verbose} && msg2 "run_dir: %s" "${run_dir}"
 
     msg "OPTIONS:"
     msg2 "arch: %s" "${target_arch}"
     msg2 "branch: %s" "${target_branch}"
-    msg2 "chroots_iso: %s" "${chroots_iso}"
     msg2 "initsys: %s" "${initsys}"
     msg2 "kernel: %s" "${kernel}"
+    [[ -n ${gpgkey} ]] && msg2 "gpgkey: %s" "${gpgkey}"
 
     msg "ARGS:"
     msg2 "clean_first: %s" "${clean_first}"
@@ -94,12 +87,9 @@ display_settings(){
     msg2 "dist_release: %s" "${dist_release}"
     msg2 "dist_codename: %s" "${dist_codename}"
 
-    msg "ISO SETTINGS:"
+    msg "ISO INFO:"
     msg2 "iso_label: %s" "${iso_label}"
-    msg2 "iso_publisher: %s" "${iso_publisher}"
-    msg2 "iso_app_id: %s" "${iso_app_id}"
-    msg2 "use_overlayfs: %s" "${use_overlayfs}"
-    ${verbose} && msg2 "iso_fs: %s" "${iso_fs}"
+    msg2 "iso_fs: %s" "${iso_fs}"
 
     msg "BUILD QUEUE:"
     run show_profile "${build_list_iso}"
@@ -134,6 +124,8 @@ usage() {
     echo "                       [default: ${kernel}]"
     echo '    -i <name>          Init system to use'
     echo "                       [default: ${initsys}]"
+    echo '    -g <key>           The gpg key for sfs signing'
+    echo "                       [default: ${gpgkey}]"
     echo '    -m                 Set SquashFS image mode to persistence'
     echo '    -c                 Disable clean work dir'
     echo '    -x                 Build images only'
@@ -149,7 +141,7 @@ usage() {
 
 orig_argv=("$@")
 
-opts='p:a:b:r:t:k:i:czxmvqh'
+opts='p:a:b:r:t:k:i:g:czxmvqh'
 
 while getopts "${opts}" arg; do
     case "${arg}" in
@@ -160,6 +152,7 @@ while getopts "${opts}" arg; do
         t) cache_dir_iso="$OPTARG" ;;
         k) kernel="$OPTARG" ;;
         i) initsys="$OPTARG" ;;
+        g) gpgkey="$OPTARG" ;;
         c) clean_first=false ;;
         x) images_only=true ;;
         z) iso_only=true ;;

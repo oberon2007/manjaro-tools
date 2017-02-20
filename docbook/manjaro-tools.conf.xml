@@ -193,27 +193,9 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
         </varlistentry>
 
         <varlistentry>
-            <!-- TODO: We should tell where exactly this is used -->
-            <term><varname>dist_name=</varname></term>
-
-            <listitem><para>Name of the distribution.
-            </para></listitem>
-        </varlistentry>
-
-
-        <varlistentry>
-            <!-- TODO: We should tell where exactly this is used -->
             <term><varname>dist_release=</varname></term>
 
-            <listitem><para>Release of the distribution.
-            </para></listitem>
-        </varlistentry>
-
-        <varlistentry>
-            <term><varname>dist_codename=</varname></term>
-
-            <listitem><para>Codename of this release. It's the value
-            of DISTRIB_CODENAME in /etc/lsb-release.
+            <listitem><para>Release version of the distribution.
             </para></listitem>
         </varlistentry>
 
@@ -226,19 +208,11 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
         </varlistentry>
 
         <varlistentry>
-            <!-- TODO: We should tell where exactly this is used -->
-            <term><varname>iso_publisher=</varname></term>
+            <term><varname>gpgkey=</varname></term>
 
-            <listitem><para>Publisher of the iso.
-            </para></listitem>
-        </varlistentry>
-
-        <varlistentry>
-            <!-- TODO: We should tell where exactly this is used -->
-            <term><varname>iso_app_id=</varname></term>
-
-            <listitem><para>Application ID of the iso.
-            </para></listitem>
+            <listitem><para>If the gpgkey is supplied, the sfs images on iso will be signed.
+                    If the key is left empty or commented, signing will be skipped.
+                    </para></listitem>
         </varlistentry>
 
         <varlistentry>
@@ -275,13 +249,6 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
                 <term><varname>account=</varname></term>
 
                 <listitem><para>Default user to be used for upload.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><varname>torrent_meta=</varname></term>
-
-                <listitem><para>Default meta comment for the torrent.
                 </para></listitem>
             </varlistentry>
 

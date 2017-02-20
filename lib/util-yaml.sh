@@ -241,12 +241,11 @@ write_postcfg_conf(){
 get_yaml(){
     local args=() yaml
     if ${chrootcfg};then
-        args+=('chrootcfg')
+        args+=("${profile}/chrootcfg")
     else
         args+=("${profile}/packages")
     fi
     args+=("${initsys}")
-    [[ ${edition} == 'sonar' ]] && args+=("${edition}")
     for arg in ${args[@]};do
         yaml=${yaml:-}${yaml:+-}${arg}
     done
@@ -400,7 +399,7 @@ write_pacman_group_yaml(){
 
 prepare_check(){
     profile=$1
-    edition=$(get_edition ${profile})
+    local edition=$(get_edition ${profile})
     profile_dir=${run_dir}/${edition}/${profile}
     check_profile
     load_profile_config "${profile_dir}/profile.conf"

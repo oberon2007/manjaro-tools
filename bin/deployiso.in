@@ -32,7 +32,6 @@ display_settings(){
     show_config
 
     msg "PROFILE:"
-    msg2 "list_dir_iso: %s" "${list_dir_iso}"
     msg2 "build_lists: %s" "$(show_build_lists ${list_dir_iso})"
     msg2 "build_list_iso: %s" "${build_list_iso}"
     msg2 "is_build_list: %s" "${is_build_list}"
@@ -45,7 +44,6 @@ display_settings(){
     msg2 "update: %s" "${update}"
     msg2 "release: %s" "${release}"
     msg2 "verbose: %s" "${verbose}"
-#     msg2 "rsync_args: %s" "${rsync_args[*]}"
     msg2 "torrent: %s" "${torrent}"
 
     if ${torrent};then

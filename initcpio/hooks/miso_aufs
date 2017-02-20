@@ -163,35 +163,39 @@ miso_mount_handler() {
 
     if [[ "${checksum}" == "y" ]]; then
         for fs in rootfs desktopfs mhwdfs livefs;do
-            if [[ -f "/run/miso/bootmnt/${misobasedir}/${arch}/${fs}.md5" ]]; then
-                msg -n ":: Self-test requested, please wait..."
-                if _verify_checksum "${fs}"; then
-                    msg "done. Checksum is OK, continue booting."
+            if [[ -f "/run/miso/bootmnt/${misobasedir}/${arch}/${fs}.sfs" ]]; then
+                if [[ -f "/run/miso/bootmnt/${misobasedir}/${arch}/${fs}.md5" ]]; then
+                    msg -n ":: Self-test requested, please wait..."
+                    if _verify_checksum "${fs}"; then
+                        msg "done. Checksum is OK, continue booting."
+                    else
+                        echo "ERROR: one or more files are corrupted"
+                        echo "see /tmp/checksum.log for details"
+                        launch_interactive_shell
+                    fi
                 else
-                    echo "ERROR: one or more files are corrupted"
-                    echo "see /tmp/checksum.log for details"
+                    echo "ERROR: checksum=y option specified but ${misobasedir}/${arch}/${fs}.md5 not found"
                     launch_interactive_shell
                 fi
-            else
-                echo "ERROR: checksum=y option specified but ${misobasedir}/${arch}/${fs}.md5 not found"
-                launch_interactive_shell
             fi
         done
     fi
 
     if [[ "${verify}" == "y" ]]; then
         for fs in rootfs desktopfs mhwdfs livefs;do
-            if [[ -f "/run/miso/bootmnt/${misobasedir}/${arch}/${fs}.sfs.sig" ]]; then
-                msg -n ":: Signature verification requested, please wait..."
-                if _verify_signature "${fs}"; then
-                    msg "done. Signature is OK, continue booting."
+            if [[ -f "/run/miso/bootmnt/${misobasedir}/${arch}/${fs}.sfs" ]]; then
+                if [[ -f "/run/miso/bootmnt/${misobasedir}/${arch}/${fs}.sfs.sig" ]]; then
+                    msg -n ":: Signature verification requested, please wait..."
+                    if _verify_signature "${fs}"; then
+                        msg "done. Signature is OK, continue booting."
+                    else
+                        echo "ERROR: one or more files are corrupted"
+                        launch_interactive_shell
+                    fi
                 else
-                    echo "ERROR: one or more files are corrupted"
+                    echo "ERROR: verify=y option specified but ${misobasedir}/${arch}/${fs}.sfs.sig not found"
                     launch_interactive_shell
                 fi
-            else
-                echo "ERROR: verify=y option specified but ${misobasedir}/${arch}/${fs}.sfs.sig not found"
-                launch_interactive_shell
             fi
         done
     fi

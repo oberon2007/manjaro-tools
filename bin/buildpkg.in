@@ -37,13 +37,9 @@ display_settings(){
     show_config
 
     msg "PROFILE:"
-    msg2 "list_dir_pkg: %s" "${list_dir_pkg}"
     msg2 "build_lists: %s" "$(show_build_lists ${list_dir_pkg})"
     msg2 "build_list_pkg: %s" "${build_list_pkg}"
     msg2 "is_build_list: %s" "${is_build_list}"
-    msg2 "build_mirror: %s" "${build_mirror}/${target_branch}"
-# 	msg2 "make_conf_dir: %s" "${make_conf_dir}"
-# 	msg2 "build_profiles: %s" "$(show_build_profiles ${make_conf_dir})"
 
     msg "OPTIONS:"
     msg2 "arch: %s" "${target_arch}"
@@ -59,7 +55,6 @@ display_settings(){
     msg2 "udev_root: %s" "${udev_root}"
 
     msg "PATHS:"
-    msg2 "work_dir: %s" "${work_dir}"
     msg2 "pkg_dir: %s" "${pkg_dir}"
 
     if ${clean_first};then
