@@ -199,7 +199,9 @@ set_branch(){
 }
 
 init_common(){
-    [[ -z ${target_branch} ]] && target_branch='stable'
+    [[ -z ${target_branch_iso} ]] && target_branch_iso='stable'
+    
+    [[ -z ${target_branch_pkg} ]] && target_branch_pkg='unstable'
 
     [[ -z ${target_arch} ]] && target_arch=$(uname -m)
 
