@@ -303,7 +303,7 @@ init_buildiso(){
 
     [[ -z ${dist_release} ]] && dist_release=$(get_release)
 
-    dist_codename=$(get_codename)
+    [[ -z ${dist_codename} ]] && dist_codename=$(get_codename)
 
     dist_name=$(get_distname)
 
@@ -468,9 +468,7 @@ load_profile_config(){
 
     [[ -z ${chrootcfg} ]] && chrootcfg='false'
 
-    #[[ -z ${netgroups} ]] && -- needs to be hardcoded for now, until a standard has been established
-    # will be unlocked again after everything has been established.
-    netgroups="https://raw.githubusercontent.com/manjaro/calamares-netgroups/master"
+    [[ -z ${netgroups} ]] && netgroups="https://raw.githubusercontent.com/manjaro/calamares-netgroups/master"
 
     [[ -z ${geoip} ]] && geoip='true'
 
