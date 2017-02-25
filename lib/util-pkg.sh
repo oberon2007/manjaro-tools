@@ -246,6 +246,7 @@ sign_pkg(){
 move_to_cache(){
     local src="$1"
     [[ -n $PKGDEST ]] && src="$PKGDEST/$1"
+    [[ ! -f $src ]] && die
     msg2 "Moving [%s] -> [%s]" "${src##*/}" "${pkg_dir}"
     mv $src ${pkg_dir}/
     ${sign} && sign_pkg "${src##*/}"
@@ -299,10 +300,8 @@ chroot_init(){
 
 build_pkg(){
     setarch "${target_arch}" \
-        mkchrootpkg ${mkchrootpkg_args[*]} || return 1
-        if [ $? -eq 0 ]; then
-            post_build
-        fi
+        mkchrootpkg ${mkchrootpkg_args[*]}
+    post_build
 }
 
 make_pkg(){
