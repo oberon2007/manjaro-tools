@@ -15,23 +15,10 @@ set_mkinicpio_hooks(){
         sed -e 's/miso_pxe_common miso_pxe_http miso_pxe_nbd miso_pxe_nfs //' \
         -e 's/memdisk //' -i $1
     fi
-    if ! ${plymouth_boot};then
-        msg2 "Removing plymouth hook"
-        sed -e 's/plymouth //' -i $1
-    fi
     if ! ${use_overlayfs};then
         msg2 "Setting aufs hook"
         sed -e 's/miso /miso_aufs /' -i $1
     fi
-}
-
-gen_boot_args(){
-    local args=(quiet)
-    local args=()
-    if ${plymouth_boot};then
-        args+=(splash)
-    fi
-    echo ${args[@]}
 }
 
 prepare_initcpio(){
@@ -39,7 +26,6 @@ prepare_initcpio(){
     cp /etc/initcpio/hooks/miso* $1/etc/initcpio/hooks
     cp /etc/initcpio/install/miso* $1/etc/initcpio/install
     cp /etc/initcpio/miso_shutdown $1/etc/initcpio
-#     sed -e "s|/usr/lib/initcpio/|/etc/initcpio/|" -i $1/etc/initcpio/install/miso_shutdown
 }
 
 prepare_initramfs(){
@@ -87,7 +73,7 @@ vars_to_boot_conf(){
         -e "s|@ARCH@|${target_arch}|g" \
         -e "s|@DRV@|$2|g" \
         -e "s|@SWITCH@|$3|g" \
-        -e "s|@BOOT_ARGS@|$(gen_boot_args)|g" \
+        -e "s|@BOOT_ARGS@||g" \
         -i $1
 }
 
