@@ -199,7 +199,9 @@ set_branch(){
 }
 
 init_common(){
-    [[ -z ${target_branch} ]] && target_branch='stable'
+    [[ -z ${target_branch_iso} ]] && target_branch_iso='stable'
+    
+    [[ -z ${target_branch_pkg} ]] && target_branch_pkg='unstable'
 
     [[ -z ${target_arch} ]] && target_arch=$(uname -m)
 
@@ -300,8 +302,6 @@ init_buildiso(){
     ##### iso settings #####
 
     [[ -z ${dist_release} ]] && dist_release=$(get_release)
-
-    dist_codename=$(get_codename)
 
     dist_name=$(get_distname)
 
@@ -455,7 +455,7 @@ load_profile_config(){
 
     [[ -z ${chrootcfg} ]] && chrootcfg='false'
 
-    netgroups="https://raw.githubusercontent.com/manjaro/calamares-netgroups/master"
+    [[ -z ${netgroups} ]] && netgroups="https://raw.githubusercontent.com/manjaro/calamares-netgroups/master"
 
     [[ -z ${geoip} ]] && geoip='true'
 
@@ -798,4 +798,16 @@ run(){
     else
         $1 $2
     fi
+}
+
+track_iso() {
+    trackfile="${log_dir}/fs_tracker"
+    [[ ! -e ${trackfile} ]] && echo "ID 0" > ${trackfile}
+
+    fs_count="$(cat ${trackfile} | tail -1 | cut -d' ' -f2)"
+    fs_count=$((fs_count+1))
+
+    echo "$version" > "$working_dir/.manjaro-tools"
+    echo "$(date) - ID ${fs_count}" > "${working_dir}/.timestamp"
+    echo "ID ${fs_count} - ${working_dir} - $(date)" >> "${trackfile}"
 }
