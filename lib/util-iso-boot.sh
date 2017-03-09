@@ -15,10 +15,6 @@ set_mkinicpio_hooks(){
         sed -e 's/miso_pxe_common miso_pxe_http miso_pxe_nbd miso_pxe_nfs //' \
         -e 's/memdisk //' -i $1
     fi
-    if ! ${use_overlayfs};then
-        msg2 "Setting aufs hook"
-        sed -e 's/miso /miso_aufs /' -i $1
-    fi
 }
 
 prepare_initcpio(){
@@ -29,14 +25,14 @@ prepare_initcpio(){
 }
 
 prepare_initramfs(){
-    cp $1/mkinitcpio.conf $2/etc/mkinitcpio-${iso_name}.conf
-    set_mkinicpio_hooks "$2/etc/mkinitcpio-${iso_name}.conf"
-    local _kernver=$(cat $2/usr/lib/modules/*/version)
+    cp ${DATADIR}/mkinitcpio.conf $1/etc/mkinitcpio-${iso_name}.conf
+    set_mkinicpio_hooks "$1/etc/mkinitcpio-${iso_name}.conf"
+    local _kernver=$(cat $1/usr/lib/modules/*/version)
     if [[ -n ${gpgkey} ]]; then
         su ${OWNER} -c "gpg --export ${gpgkey} >${USERCONFDIR}/gpgkey"
         exec 17<>${USERCONFDIR}/gpgkey
     fi
-    MISO_GNUPG_FD=${gpgkey:+17} chroot-run $2 \
+    MISO_GNUPG_FD=${gpgkey:+17} chroot-run $1 \
         /usr/bin/mkinitcpio -k ${_kernver} \
         -c /etc/mkinitcpio-${iso_name}.conf \
         -g /boot/initramfs.img
@@ -94,13 +90,13 @@ prepare_efi_loader(){
     vars_to_boot_conf $2/loader/loader.conf
     cp ${efi_data}/uefi-shell-v{1,2}-x86_64.conf ${entries}
 
-    local drv='free' switch="no"
+    local label='free' switch="no"
     cp ${efi_data}/entry-x86_64-$3.conf ${entries}/${iso_name}-x86_64.conf
-    vars_to_boot_conf "${entries}/${iso_name}-x86_64.conf" "$drv" "$switch"
+    vars_to_boot_conf "${entries}/${iso_name}-x86_64.conf" "$label" "$switch"
     if ${nonfree_mhwd};then
-        drv='nonfree' switch="yes"
+        label='nonfree' switch="yes"
         cp ${efi_data}/entry-x86_64-$3.conf ${entries}/${iso_name}-x86_64-nonfree.conf
-        vars_to_boot_conf "${entries}/${iso_name}-x86_64-nonfree.conf" "$drv" "$switch"
+        vars_to_boot_conf "${entries}/${iso_name}-x86_64-nonfree.conf" "$label" "$switch"
     fi
 }
 

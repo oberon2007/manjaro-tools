@@ -366,7 +366,6 @@ check_yaml(){
 
 write_calamares_yaml(){
     configure_calamares "${yaml_dir}"
-    local yf
     if ${validate}; then
         for conf in "${yaml_dir}"/etc/calamares/modules/*.conf "${yaml_dir}"/etc/calamares/settings.conf; do
             check_yaml "$conf"
@@ -401,7 +400,7 @@ prepare_check(){
     profile=$1
     local edition=$(get_edition ${profile})
     profile_dir=${run_dir}/${edition}/${profile}
-    check_profile
+    check_profile "${profile_dir}"
     load_profile_config "${profile_dir}/profile.conf"
 
     yaml_dir=${cache_dir_netinstall}/${profile}/${target_arch}

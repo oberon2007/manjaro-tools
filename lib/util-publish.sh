@@ -9,14 +9,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-create_release(){
-    msg "Create release (%s) ..." "${target_dir}"
-    rsync ${rsync_args[*]} /dev/null ${url}/${profile}/
-    rsync ${rsync_args[*]} /dev/null ${url}/${target_dir}/
-    show_elapsed_time "${FUNCNAME}" "${timer_start}"
-    msg "Done (%s)" "${target_dir}"
-}
-
 connect(){
     local home="/home/frs/project"
     echo "${account},${project}@frs.${host}:${home}/${project}"
@@ -56,10 +48,6 @@ prepare_transfer(){
 
 sync_dir(){
     prepare_transfer "$1"
-    if ${release} && ! ${exists};then
-        create_release
-        exists=true
-    fi
     msg "Start upload [%s] ..." "$1"
     rsync ${rsync_args[*]} ${src_dir}/ ${url}/${target_dir}/
     msg "Done upload [%s]" "$1"

@@ -361,7 +361,7 @@ make_image_boot() {
         fi
 
         prepare_initcpio "${path}"
-        prepare_initramfs "${profile_dir}" "${path}"
+        prepare_initramfs "${path}"
 
         mv ${path}/boot/initramfs.img ${boot}/${target_arch}/initramfs.img
         prepare_boot_extras "${path}" "${boot}"
@@ -448,17 +448,10 @@ check_requirements(){
     fi
 
     local iso_kernel=${kernel:5:1} host_kernel=$(uname -r)
-
-    if [[ ${iso_kernel} < "4" ]] || [[ ${host_kernel%%*.} < "4" ]];then
-        use_overlayfs='false'
+    if [[ ${iso_kernel} < "4" ]] \
+    || [[ ${host_kernel%%*.} < "4" ]];then
+        die "The host and iso kernels must be version>=4.0!"
     fi
-
-    if ${use_overlayfs};then
-        iso_fs="overlayfs"
-    else
-        iso_fs="aufs"
-    fi
-    import ${LIBDIR}/util-iso-${iso_fs}.sh
 }
 
 compress_images(){
@@ -542,7 +535,7 @@ get_pacman_conf(){
 }
 
 load_profile(){
-    conf="${profile_dir}/profile.conf"
+    conf="$1/profile.conf"
 
     info "Profile: [%s]" "${profile}"
 
@@ -571,8 +564,8 @@ prepare_profile(){
     profile=$1
     edition=$(get_edition ${profile})
     profile_dir=${run_dir}/${edition}/${profile}
-    check_profile
-    load_profile
+    check_profile "${profile_dir}"
+    load_profile "${profile_dir}"
 }
 
 build(){
