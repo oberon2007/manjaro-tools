@@ -42,7 +42,6 @@ display_settings(){
 
     msg "ARGS:"
     msg2 "update: %s" "${update}"
-    msg2 "release: %s" "${release}"
     msg2 "verbose: %s" "${verbose}"
     msg2 "torrent: %s" "${torrent}"
 
@@ -69,10 +68,8 @@ load_config "${USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/ma
 run_dir=${cache_dir_iso}
 
 pretend=false
-release=false
 update=false
 verbose=false
-exists=false
 torrent=false
 
 rsync_args=(-aP --progress -e ssh)
@@ -81,7 +78,6 @@ usage() {
     echo "Usage: ${0##*/} [options]"
     echo "    -p                 Source folder to upload [default:${build_list_iso}]"
     echo "    -l                 Limit bandwidth in kB/s [default:${limit}]"
-    echo '    -c                 Create new remote release directory'
     echo '    -u                 Update remote directory'
     echo '    -t                 Create iso torrent'
     echo '    -q                 Query settings and pretend upload'
@@ -92,13 +88,12 @@ usage() {
     exit $1
 }
 
-opts='p:l:cuvtqh'
+opts='p:l:uvtqh'
 
 while getopts "${opts}" arg; do
     case "${arg}" in
                 p) build_list_iso="$OPTARG" ;;
                 l) limit="$OPTARG" ;;
-                c) release=true ;;
                 u) update=true; rsync_args+=(-u) ;;
                 t) torrent=true ;;
                 v) verbose=true; rsync_args+=(-v --stats) ;;

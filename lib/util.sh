@@ -317,8 +317,6 @@ init_buildiso(){
 
     [[ -z ${kernel} ]] && kernel="linux49"
 
-    [[ -z ${use_overlayfs} ]] && use_overlayfs='true'
-
     [[ -z ${gpgkey} ]] && gpgkey=''
 
     mhwd_repo="/opt/pkg"
@@ -364,37 +362,6 @@ load_config(){
     return 0
 }
 
-is_valid_bool(){
-    case $1 in
-        'true'|'false') return 0 ;;
-        *) return 1 ;;
-    esac
-}
-
-check_profile_vars(){
-    if ! is_valid_bool "${autologin}";then
-        die "autologin only accepts true/false value!"
-    fi
-    if ! is_valid_bool "${multilib}";then
-        die "multilib only accepts true/false value!"
-    fi
-    if ! is_valid_bool "${nonfree_mhwd}";then
-        die "nonfree_mhwd only accepts true/false value!"
-    fi
-    if ! is_valid_bool "${pxe_boot}";then
-        die "pxe_boot only accepts true/false value!"
-    fi
-    if ! is_valid_bool "${netinstall}";then
-        die "netinstall only accepts true/false value!"
-    fi
-    if ! is_valid_bool "${chrootcfg}";then
-        die "chrootcfg only accepts true/false value!"
-    fi
-    if ! is_valid_bool "${geoip}";then
-        die "geoip only accepts true/false value!"
-    fi
-}
-
 load_profile_config(){
 
     [[ -f $1 ]] || return 1
@@ -425,7 +392,7 @@ load_profile_config(){
     [[ -z ${login_shell} ]] && login_shell='/bin/bash'
 
     if [[ -z ${addgroups} ]];then
-        addgroups="video,power,storage,optical,network,lp,scanner,wheel"
+        addgroups="video,power,storage,optical,network,lp,scanner,wheel,sys"
     fi
 
     if [[ -z ${enable_systemd[@]} ]];then
@@ -463,13 +430,10 @@ load_profile_config(){
 
     [[ -z ${smb_workgroup} ]] && smb_workgroup=''
 
-    [[ -z ${basic} ]] && basic='true'
+    basic='true'
     [[ -z ${extra} ]] && extra='false'
 
-    #${basic} && extra='false'
     ${extra} && basic='false'
-
-    check_profile_vars
 
     return 0
 }
@@ -510,12 +474,11 @@ reset_profile(){
 }
 
 check_profile(){
-    local keyfiles=("${profile_dir}/mkinitcpio.conf"
-            "${profile_dir}/Packages-Root"
-            "${profile_dir}/Packages-Live")
+    local keyfiles=("$1/Packages-Root"
+            "$1/Packages-Live")
 
-    local keydirs=("${profile_dir}/root-overlay"
-            "${profile_dir}/live-overlay")
+    local keydirs=("$1/root-overlay"
+            "$1/live-overlay")
 
     local has_keyfiles=false has_keydirs=false
     for f in ${keyfiles[@]}; do
@@ -535,12 +498,12 @@ check_profile(){
         fi
     done
     if ! ${has_keyfiles} && ! ${has_keydirs};then
-        die "Profile [%s] sanity check failed!" "${profile_dir}"
+        die "Profile [%s] sanity check failed!" "$1"
     fi
 
-    [[ -f "${profile_dir}/Packages-Desktop" ]] && packages_desktop=${profile_dir}/Packages-Desktop
+    [[ -f "$1/Packages-Desktop" ]] && packages_desktop=$1/Packages-Desktop
 
-    [[ -f "${profile_dir}/Packages-Mhwd" ]] && packages_mhwd=${profile_dir}/Packages-Mhwd
+    [[ -f "$1/Packages-Mhwd" ]] && packages_mhwd=$1/Packages-Mhwd
 
     if ! ${netinstall}; then
         chrootcfg="false"

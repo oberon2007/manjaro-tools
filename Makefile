@@ -1,4 +1,4 @@
-Version=0.14.0
+Version=0.15.0
 
 PREFIX = /usr/local
 SYSCONFDIR = /etc
@@ -32,9 +32,6 @@ ARCH_CONF = \
 	data/make.conf.d/i686.conf \
 	data/make.conf.d/x86_64.conf \
 	data/make.conf.d/multilib.conf
-# 	data/make.conf.d/aarch64.conf \
-# 	data/make.conf.d/armv6h.conf \
-# 	data/make.conf.d/armv7h.conf
 
 BIN_PKG = \
 	bin/checkpkg \
@@ -68,19 +65,18 @@ BIN_ISO = \
 
 LIBS_ISO = \
 	lib/util-iso.sh \
-	lib/util-iso-aufs.sh \
-	lib/util-iso-overlayfs.sh \
+	lib/util-iso-mount.sh \
 	lib/util-iso-image.sh \
 	lib/util-iso-boot.sh \
 	lib/util-publish.sh
 
 SHARED_ISO = \
 	data/pacman-mhwd.conf \
+	data/mkinitcpio.conf \
 	data/profile.conf.example
 
 CPIOHOOKS = \
 	initcpio/hooks/miso \
-	initcpio/hooks/miso_aufs \
 	initcpio/hooks/miso_loop_mnt \
 	initcpio/hooks/miso_pxe_common \
 	initcpio/hooks/miso_pxe_http \
@@ -90,7 +86,6 @@ CPIOHOOKS = \
 
 CPIOINST = \
 	initcpio/install/miso \
-	initcpio/install/miso_aufs \
 	initcpio/install/miso_loop_mnt \
 	initcpio/install/miso_pxe_common \
 	initcpio/install/miso_pxe_http \
@@ -186,14 +181,6 @@ install_iso:
 
 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/manjaro-tools
 	install -m0644 ${LIBS_ISO} $(DESTDIR)$(PREFIX)/lib/manjaro-tools
-
-# 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/initcpio/hooks
-# 	install -m0755 ${CPIOHOOKS} $(DESTDIR)$(PREFIX)/lib/initcpio/hooks
-#
-# 	install -dm0755 $(DESTDIR)$(PREFIX)/lib/initcpio/install
-# 	install -m0755 ${CPIOINST} $(DESTDIR)$(PREFIX)/lib/initcpio/install
-
-# 	install -m0755 ${CPIO} $(DESTDIR)$(PREFIX)/lib/initcpio
 
 	install -dm0755 $(DESTDIR)$(SYSCONFDIR)/initcpio/hooks
 	install -m0755 ${CPIOHOOKS} $(DESTDIR)$(SYSCONFDIR)/initcpio/hooks
