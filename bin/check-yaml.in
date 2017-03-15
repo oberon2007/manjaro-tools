@@ -30,7 +30,6 @@ show_profile(){
 
     [[ ${target_arch} == 'x86_64' ]] && msg2 "multilib: %s" "${multilib}"
 
-    msg2 "basic: %s" "${basic}"
     msg2 "extra: %s" "${extra}"
 
     msg2 "netinstall: %s" "${netinstall}"

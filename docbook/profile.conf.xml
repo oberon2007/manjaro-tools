@@ -109,22 +109,6 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
             </varlistentry>
 
             <varlistentry>
-                <term><varname>netgroups=</varname></term>
-
-                <listitem><para>Default url for the netinstall.yaml.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><varname>basic=</varname></term>
-
-                <listitem><para>Accepts
-                        <option>true</option> (the default)
-                        <option>false</option>.</para>
-                </listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><varname>extra=</varname></term>
 
                 <listitem><para>Accepts

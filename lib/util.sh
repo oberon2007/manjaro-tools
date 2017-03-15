@@ -402,7 +402,7 @@ load_profile_config(){
     [[ -z ${disable_systemd[@]} ]] && disable_systemd=('pacman-init')
 
     if [[ -z ${enable_openrc[@]} ]];then
-        enable_openrc=('acpid' 'bluetooth' 'cgmanager' 'consolekit' 'cronie' 'cupsd' 'dbus' 'syslog-ng' 'NetworkManager')
+        enable_openrc=('acpid' 'bluetooth' 'elogind' 'cronie' 'cupsd' 'dbus' 'syslog-ng' 'NetworkManager')
     fi
 
     [[ -z ${disable_openrc[@]} ]] && disable_openrc=()
@@ -467,9 +467,7 @@ reset_profile(){
     unset login_shell
     unset netinstall
     unset chrootcfg
-    unset netgroups
     unset geoip
-    unset basic
     unset extra
 }
 
@@ -775,4 +773,23 @@ track_iso() {
     echo "$version" > "$working_dir/.manjaro-tools"
     echo "$(date) - ID ${fs_count}" > "${working_dir}/.timestamp"
     echo "ID ${fs_count} - ${working_dir} - $(date)" >> "${trackfile}"
+}
+
+is_btrfs() {
+    [[ -e "$1" && "$(stat -f -c %T "$1")" == btrfs ]]
+}
+
+subvolume_delete_recursive() {
+    local subvol
+
+    is_btrfs "$1" || return 0
+
+    while IFS= read -d $'\0' -r subvol; do
+        if ! btrfs subvolume delete "$subvol" &>/dev/null; then
+            error "Unable to delete subvolume %s" "$subvol"
+            return 1
+        fi
+    done < <(find "$1" -xdev -depth -inum 256 -print0)
+
+    return 0
 }

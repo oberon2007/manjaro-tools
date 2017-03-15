@@ -209,9 +209,7 @@ chroot_clean(){
 
         lock 9 "${copy}.lock" "Locking chroot copy '${copy}'"
 
-        if [[ "$(stat -f -c %T "${copy}")" == btrfs ]]; then
-            { type -P btrfs && btrfs subvolume delete "${copy}"; } &>/dev/null
-        fi
+        subvolume_delete_recursive "${copy}"
         rm -rf --one-file-system "${copy}"
     done
     exec 9>&-

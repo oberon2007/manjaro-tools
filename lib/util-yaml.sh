@@ -21,11 +21,11 @@ write_machineid_conf(){
 
 write_finished_conf(){
     msg2 "Writing %s ..." "finished.conf"
-    local conf="${modules_dir}/finished.conf" cmd="shutdown -r now"
+    local conf="${modules_dir}/finished.conf" cmd="loginctl reboot"
     echo '---' > "$conf"
     echo 'restartNowEnabled: true' >> "$conf"
     echo 'restartNowChecked: false' >> "$conf"
-    [[ ${initsys} == 'systemd' ]] && cmd="systemctl -i reboot"
+    [[ ${initsys} == 'systemd' ]] && cmd="systemctl reboot"
     echo "restartNowCommand: \"${cmd}\"" >> "$conf"
 }
 
