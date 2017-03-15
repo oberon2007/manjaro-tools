@@ -3,7 +3,7 @@
 
 _pkgbase=manjaro-tools
 _ver=0.14.4
-_branch=hybrid
+_branch=17.0
 
 pkgbase=manjaro-tools-git
 pkgname=('manjaro-tools-base-git'
