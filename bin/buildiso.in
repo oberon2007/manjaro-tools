@@ -25,7 +25,6 @@ show_profile(){
     if ${verbose};then
         msg2 "autologin: %s" "${autologin}"
         msg2 "nonfree_mhwd: %s" "${nonfree_mhwd}"
-        msg2 "pxe_boot: %s" "${pxe_boot}"
 
         [[ ${target_arch} == 'x86_64' ]] && msg2 "multilib: %s" "${multilib}"
 

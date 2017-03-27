@@ -9,14 +9,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-set_mkinicpio_hooks(){
-    if ! ${pxe_boot};then
-        msg2 "Removing pxe hooks"
-        sed -e 's/miso_pxe_common miso_pxe_http miso_pxe_nbd miso_pxe_nfs //' \
-        -e 's/memdisk //' -i $1
-    fi
-}
-
 prepare_initcpio(){
     msg2 "Copying initcpio ..."
     cp /etc/initcpio/hooks/miso* $1/etc/initcpio/hooks
@@ -26,7 +18,6 @@ prepare_initcpio(){
 
 prepare_initramfs(){
     cp ${DATADIR}/mkinitcpio.conf $1/etc/mkinitcpio-${iso_name}.conf
-    set_mkinicpio_hooks "$1/etc/mkinitcpio-${iso_name}.conf"
     local _kernver=$(cat $1/usr/lib/modules/*/version)
     if [[ -n ${gpgkey} ]]; then
         su ${OWNER} -c "gpg --export ${gpgkey} >${USERCONFDIR}/gpgkey"
@@ -52,91 +43,73 @@ prepare_boot_extras(){
     cp $1/usr/share/licenses/common/GPL2/license.txt $2/memtest.COPYING
 }
 
-prepare_efiboot_image(){
-    local efi=$1/EFI/miso boot=$2/${iso_name}/boot
-    prepare_dir "${efi}"
-    cp ${boot}/x86_64/vmlinuz ${efi}/vmlinuz.efi
-    cp ${boot}/x86_64/initramfs.img ${efi}/initramfs.img
-    if [[ -f ${boot}/intel_ucode.img ]] ; then
-        cp ${boot}/intel_ucode.img ${efi}/intel_ucode.img
-    fi
-}
-
-vars_to_boot_conf(){
-    sed -e "s|@ISO_NAME@|${iso_name}|g" \
-        -e "s|@ISO_LABEL@|${iso_label}|g" \
-        -e "s|@DIST_NAME@|${dist_name}|g" \
+configure_grub(){
+    local default_args="misobasedir=${iso_name} misolabel=${iso_label}" \
+        video_args="nouveau.modeset=1 i915.modeset=1 radeon.modeset=1" \
+        boot_args=(quiet) 
+        [[ $2 == 'systemd' ]] && boot_args+=(systemd.show_status=1)
+        
+        local mhwd_args="nonfree=$4"
+        
+    sed -e "s|@DIST_NAME@|${dist_name}|g" \
         -e "s|@ARCH@|${target_arch}|g" \
-        -e "s|@DRV@|$2|g" \
-        -e "s|@SWITCH@|$3|g" \
-        -e "s|@BOOT_ARGS@||g" \
+        -e "s|@DEFAULT_ARGS@|${default_args}|g" \
+        -e "s|@VIDEO_ARGS@|${video_args}|g" \
+        -e "s|@BOOT_ARGS@|${boot_args[@]}|g" \
+        -e "s|@MHWD_ARGS@|${mhwd_args}|g" \
+        -e "s|@PROFILE@|$3|g" \
         -i $1
 }
 
-prepare_efi_loader(){
-    local efi_data=$1/usr/share/efi-utils efi=$2/EFI/boot
-    msg2 "Preparing efi loaders ..."
-    prepare_dir "${efi}"
-    cp $1/usr/share/efitools/efi/PreLoader.efi ${efi}/bootx64.efi
-    cp $1/usr/share/efitools/efi/HashTool.efi ${efi}
-    cp ${efi_data}/gummibootx64.efi ${efi}/loader.efi
-    cp ${efi_data}/shellx64_v{1,2}.efi $2/EFI
+prepare_grub(){
+    local platform=i386-pc img='core.img' grub=$2/boot/grub efi=$2/efi/boot \
+        data=$1/usr/share/grub lib=$1/usr/lib/grub prefix=/boot/grub
 
-    local entries=$2/loader/entries
-    msg2 "Preparing efi loader config ..."
-    prepare_dir "${entries}"
+    prepare_dir ${grub}/${platform}
 
-    cp ${efi_data}/loader.conf $2/loader/loader.conf
-    vars_to_boot_conf $2/loader/loader.conf
-    cp ${efi_data}/uefi-shell-v{1,2}-x86_64.conf ${entries}
+    cp ${data}/cfg/*.cfg ${grub}
 
-    local label='free' switch="no"
-    cp ${efi_data}/entry-x86_64-$3.conf ${entries}/${iso_name}-x86_64.conf
-    vars_to_boot_conf "${entries}/${iso_name}-x86_64.conf" "$label" "$switch"
-    if ${nonfree_mhwd};then
-        label='nonfree' switch="yes"
-        cp ${efi_data}/entry-x86_64-$3.conf ${entries}/${iso_name}-x86_64-nonfree.conf
-        vars_to_boot_conf "${entries}/${iso_name}-x86_64-nonfree.conf" "$label" "$switch"
-    fi
-}
+    cp ${lib}/${platform}/* ${grub}/${platform}
 
-check_syslinux_select(){
-    local boot=${iso_root}/${iso_name}/boot
-    if [[ ! -f ${boot}/x86_64/vmlinuz ]] ; then
-        msg2 "Configuring syslinux for i686 architecture only ..."
-        sed -e "s/select.cfg/i686_inc.cfg/g" -i "$1/miso.cfg"
-    fi
-}
+    msg2 "Building %s ..." "${img}"
 
-check_syslinux_nonfree(){
-    msg2 "Configuring syslinux menu ..."
-    sed -e "/LABEL nonfree/,/^$/d" -i "$1/miso_sys_i686.cfg"
-    sed -e "/LABEL nonfree/,/^$/d" -i "$1/miso_sys_x86_64.cfg"
-    sed -e "/nonfree/ d" -i $1/syslinux.msg
-}
+    grub-mkimage -d ${grub}/${platform} -o ${grub}/${platform}/${img} -O ${platform} -p ${prefix} biosdisk iso9660
 
-prepare_isolinux(){
-    local syslinux=$1/usr/lib/syslinux/bios
-    msg2 "Copying isolinux binaries ..."
-    cp ${syslinux}/{{isolinux,isohdpfx}.bin,ldlinux.c32} $2
-    msg2 "Copying isolinux.cfg ..."
-    cp $1/usr/share/syslinux/isolinux/isolinux.cfg $2
-    vars_to_boot_conf "$2/isolinux.cfg"
-}
+    cat ${grub}/${platform}/cdboot.img ${grub}/${platform}/${img} > ${grub}/${platform}/eltorito.img
 
-prepare_syslinux(){
-    local syslinux=$1/usr/lib/syslinux/bios
-    msg2 "Copying syslinux binaries ..."
-    cp ${syslinux}/{*.c32,lpxelinux.0,memdisk} $2
-    msg2 "Copying syslinux theme ..."
-    syslinux=$1/usr/share/syslinux/theme
-    cp ${syslinux}/* $2
-    for conf in $2/*.cfg; do
-        vars_to_boot_conf "${conf}"
-    done
-    # Check for dual-arch
-    check_syslinux_select "$2"
-    if ! ${nonfree_mhwd};then
-        check_syslinux_nonfree "$2"
-    fi
+    case ${target_arch} in
+        'i686')
+            platform=i386-efi
+            img=bootia32.efi
+        ;;
+        'x86_64')
+            platform=x86_64-efi
+            img=bootx64.efi
+        ;;
+    esac
+
+    prepare_dir ${efi}
+    prepare_dir ${grub}/${platform}
+
+    cp ${lib}/${platform}/* ${grub}/${platform}
+
+    msg2 "Building %s ..." "${img}"
+
+    grub-mkimage -d ${grub}/${platform} -o ${efi}/${img} -O ${platform} -p ${prefix} iso9660
+
+    prepare_dir ${grub}/themes
+    cp -r ${data}/themes/${iso_name}-live ${grub}/themes/
+    cp ${data}/unicode.pf2 ${grub}
+    cp -r ${data}/{locales,tz} ${grub}
+
+    local size=8M mnt="${mnt_dir}/efiboot" efi_img="$2/efi.img"
+    msg2 "Creating fat image of %s ..." "${size}"
+    truncate -s ${size} "${efi_img}"
+    mkfs.fat -n MISO_EFI "${efi_img}" &>/dev/null
+    prepare_dir "${mnt}"
+    mount_img "${efi_img}" "${mnt}"    
+    prepare_dir ${mnt}/efi/boot
+    msg2 "Building %s ..." "${img}"
+    grub-mkimage -d ${grub}/${platform} -o ${mnt}/efi/boot/${img} -O ${platform} -p ${prefix} iso9660
+    umount_img "${mnt}"
 }
