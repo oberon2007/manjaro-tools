@@ -21,6 +21,7 @@ SYSCONFDIR='@sysconfdir@'
 
 import ${LIBDIR}/util.sh
 import ${LIBDIR}/util-pkg.sh
+import ${LIBDIR}/util-pkg-chroot.sh
 
 show_pkg(){
     check_build "$1"

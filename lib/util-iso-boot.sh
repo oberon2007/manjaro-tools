@@ -43,24 +43,6 @@ prepare_boot_extras(){
     cp $1/usr/share/licenses/common/GPL2/license.txt $2/memtest.COPYING
 }
 
-configure_grub(){
-    local default_args="misobasedir=${iso_name} misolabel=${iso_label}" \
-        video_args="nouveau.modeset=1 i915.modeset=1 radeon.modeset=1" \
-        boot_args=(quiet) 
-        [[ $2 == 'systemd' ]] && boot_args+=(systemd.show_status=1)
-        
-        local mhwd_args="nonfree=$4"
-        
-    sed -e "s|@DIST_NAME@|${dist_name}|g" \
-        -e "s|@ARCH@|${target_arch}|g" \
-        -e "s|@DEFAULT_ARGS@|${default_args}|g" \
-        -e "s|@VIDEO_ARGS@|${video_args}|g" \
-        -e "s|@BOOT_ARGS@|${boot_args[@]}|g" \
-        -e "s|@MHWD_ARGS@|${mhwd_args}|g" \
-        -e "s|@PROFILE@|$3|g" \
-        -i $1
-}
-
 prepare_grub(){
     local platform=i386-pc img='core.img' grub=$2/boot/grub efi=$2/efi/boot \
         data=$1/usr/share/grub lib=$1/usr/lib/grub prefix=/boot/grub
@@ -107,7 +89,7 @@ prepare_grub(){
     truncate -s ${size} "${efi_img}"
     mkfs.fat -n MISO_EFI "${efi_img}" &>/dev/null
     prepare_dir "${mnt}"
-    mount_img "${efi_img}" "${mnt}"    
+    mount_img "${efi_img}" "${mnt}"
     prepare_dir ${mnt}/efi/boot
     msg2 "Building %s ..." "${img}"
     grub-mkimage -d ${grub}/${platform} -o ${mnt}/efi/boot/${img} -O ${platform} -p ${prefix} iso9660
