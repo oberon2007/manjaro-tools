@@ -166,7 +166,7 @@ assemble_iso(){
     iso_publisher="$(get_osname) <$(get_disturl)>"
 
     iso_app_id="$(get_osname) Live/Rescue CD"
-    
+
     xorriso -as mkisofs \
         --protective-msdos-label \
         -volid "${iso_label}" \
@@ -344,7 +344,7 @@ make_image_boot() {
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
         msg "Prepare [/iso/boot]"
         local boot="${iso_root}/boot"
-        
+
         mkdir -p ${boot}
 
         cp ${work_dir}/rootfs/boot/vmlinuz* ${boot}/vmlinuz-${target_arch}
@@ -372,16 +372,32 @@ make_image_boot() {
     fi
 }
 
+configure_grub(){
+    local default_args="misobasedir=${iso_name} misolabel=${iso_label}" \
+        video_args="nouveau.modeset=1 i915.modeset=1 radeon.modeset=1" \
+        boot_args=('quiet') mhwd_args="nonfree=${nonfree_mhwd}"
+    [[ ${initsys} == 'systemd' ]] && boot_args+=('systemd.show_status=1')
+
+    sed -e "s|@DIST_NAME@|${dist_name}|g" \
+        -e "s|@ARCH@|${target_arch}|g" \
+        -e "s|@DEFAULT_ARGS@|${default_args}|g" \
+        -e "s|@VIDEO_ARGS@|${video_args}|g" \
+        -e "s|@BOOT_ARGS@|${boot_args[*]}|g" \
+        -e "s|@MHWD_ARGS@|${mhwd_args}|g" \
+        -e "s|@PROFILE@|${profile}|g" \
+        -i $1
+}
+
 make_grub(){
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
         msg "Prepare [/iso/boot/grub]"
-        
+
         local path="${work_dir}/rootfs"
-        
+
         prepare_grub "${path}" "${iso_root}"
-        
-        configure_grub "${iso_root}/boot/grub/kernels.cfg" "${initsys}" "${profile}" "${nonfree_mhwd}"
-        
+
+        configure_grub "${iso_root}/boot/grub/kernels.cfg"
+
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [/iso/boot/grub]"
     fi
@@ -432,7 +448,7 @@ prepare_images(){
     fi
     run_safe "make_image_boot"
     run_safe "make_grub"
-   
+
     show_elapsed_time "${FUNCNAME}" "${timer}"
 }
 
@@ -449,7 +465,7 @@ make_profile(){
     msg "Start building [%s]" "${profile}"
     if ${clean_first};then
         chroot_clean "${chroots_iso}/${profile}/${target_arch}"
-        
+
         local unused_arch=''
         case ${target_arch} in
             i686) unused_arch='x86_64' ;;
@@ -460,7 +476,7 @@ make_profile(){
         fi
         clean_iso_root "${iso_root}"
     fi
-    
+
     if ${iso_only}; then
         [[ ! -d ${work_dir} ]] && die "Create images: buildiso -p %s -x" "${profile}"
         compress_images

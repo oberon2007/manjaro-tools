@@ -42,8 +42,7 @@ BIN_PKG = \
 	bin/buildtree
 
 LIBS_PKG = \
-	lib/util-pkg.sh \
-	lib/util-pkgtree.sh
+	$(wildcard lib/util-pkg*.sh)
 
 SHARED_PKG = \
 	data/makepkg.conf \
