@@ -84,18 +84,9 @@ configure_lsb(){
     fi
 }
 
-configure_mhwd(){
-    if [[ ${target_arch} == "x86_64" ]];then
-        if ! ${multilib};then
-            msg2 "Disable mhwd lib32 support"
-            echo 'MHWD64_IS_LIB32="false"' > $1/etc/mhwd-x86_64.conf
-        fi
-    fi
-}
-
 configure_logind(){
     msg2 "Configuring logind ..."
-    local conf=$1/etc/systemd/logind.conf
+    local conf=$1/etc/$2/logind.conf
     sed -i 's/#\(HandleSuspendKey=\)suspend/\1ignore/' "$conf"
     sed -i 's/#\(HandleLidSwitch=\)suspend/\1ignore/' "$conf"
     sed -i 's/#\(HandleHibernateKey=\)hibernate/\1ignore/' "$conf"
@@ -166,8 +157,8 @@ configure_hosts(){
 configure_system(){
     case ${initsys} in
         'systemd')
+            configure_logind "$1" "systemd"
             configure_journald "$1"
-            configure_logind "$1"
 
             # Prevent some services to be started in the livecd
             echo 'File created by manjaro-tools. See systemd-update-done.service(8).' \
@@ -175,14 +166,14 @@ configure_system(){
 
             msg2 "Disable systemd-gpt-auto-generator"
             ln -sf /dev/null "${path}/usr/lib/systemd/system-generators/systemd-gpt-auto-generator"
-
-            echo ${hostname} > $1/etc/hostname
         ;;
         'openrc')
-            local hn='hostname="'${hostname}'"'
-            sed -i -e "s|^.*hostname=.*|${hn}|" $1/etc/conf.d/hostname
+            configure_logind "$1" "elogind"
+#             local hn='hostname="'${hostname}'"'
+#             sed -i -e "s|^.*hostname=.*|${hn}|" $1/etc/conf.d/hostname
         ;;
     esac
+    echo ${hostname} > $1/etc/hostname
 }
 
 configure_thus(){
@@ -211,7 +202,6 @@ configure_thus(){
 configure_live_image(){
     msg "Configuring [livefs]"
     configure_hosts "$1"
-    configure_mhwd "$1"
     configure_system "$1"
     configure_services "$1"
     configure_calamares "$1"
@@ -251,13 +241,18 @@ chroot_create(){
         mkchroot ${mkchroot_args[*]} ${flag} $@
 }
 
+clean_iso_root(){
+    msg2 "Deleting isoroot [%s] ..." "${1##*/}"
+    rm -rf --one-file-system "$1"
+}
+
 chroot_clean(){
     msg "Cleaning up ..."
     for image in "$1"/*fs; do
         [[ -d ${image} ]] || continue
         local name=${image##*/}
         if [[ $name != "mhwdfs" ]];then
-            msg2 "Deleting chroot [%s] ..." "$name"
+            msg2 "Deleting chroot [%s] (%s) ..." "$name" "${1##*/}"
             lock 9 "${image}.lock" "Locking chroot '${image}'"
             if [[ "$(stat -f -c %T "${image}")" == btrfs ]]; then
                 { type -P btrfs && btrfs subvolume delete "${image}"; } #&> /dev/null
@@ -267,8 +262,6 @@ chroot_clean(){
     done
     exec 9>&-
     rm -rf --one-file-system "$1"
-    msg2 "Deleting isoroot [%s] ..." "${2##*/}"
-    rm -rf --one-file-system "$2"
 }
 
 clean_up_image(){

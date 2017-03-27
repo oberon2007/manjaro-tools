@@ -22,11 +22,15 @@ run_hook () {
                     break
                 fi
             done
-            ip="${ip}::${bootif_dev}"
+            if [[ "${ip}" == "dhcp" ]]; then
+               ip=":::::${bootif_dev}:dhcp"
+            else
+               ip="${ip}::${bootif_dev}"
+           fi
         fi
 
         # setup network and save some values
-        if ! ipconfig "ip=${ip}"; then
+        if ! ipconfig -t 20 "ip=${ip}"; then
                 echo "ERROR; Failed to configure network"
                 echo "   Falling back to interactive prompt"
                 echo "   You can try to fix the problem manually, log out when you are finished"
