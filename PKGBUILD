@@ -2,15 +2,15 @@
 # Maintainer: Philip Müller <philm@manjaro.org>
 
 _pkgbase=manjaro-tools
-_ver=0.14.4
-_branch=17.0
+_ver=0.15.0
+_branch=hybrid
 
 pkgbase=manjaro-tools-git
 pkgname=('manjaro-tools-base-git'
         'manjaro-tools-pkg-git'
         'manjaro-tools-iso-git'
         'manjaro-tools-yaml-git')
-pkgver=r2542.4d3bd5d
+pkgver=r2588.2db6fe1
 pkgrel=1
 arch=('any')
 pkgdesc='Development tools for Manjaro Linux'
@@ -82,4 +82,3 @@ package_manjaro-tools-iso-git() {
 	cd ${srcdir}/${_pkgbase}
 	make SYSCONFDIR=/etc PREFIX=/usr DESTDIR=${pkgdir} install_iso
 }
-

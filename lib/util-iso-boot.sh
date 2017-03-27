@@ -43,6 +43,10 @@ prepare_boot_extras(){
     cp $1/usr/share/licenses/common/GPL2/license.txt $2/memtest.COPYING
 }
 
+get_boot_args() {
+    echo "${boot_args[@]}"
+}
+
 configure_grub(){
     local default_args="misobasedir=${iso_name} misolabel=${iso_label}" \
         video_args="nouveau.modeset=1 i915.modeset=1 radeon.modeset=1" \
@@ -55,7 +59,7 @@ configure_grub(){
         -e "s|@ARCH@|${target_arch}|g" \
         -e "s|@DEFAULT_ARGS@|${default_args}|g" \
         -e "s|@VIDEO_ARGS@|${video_args}|g" \
-        -e "s|@BOOT_ARGS@|${boot_args[@]}|g" \
+        -e "s|@BOOT_ARGS@|$(get_boot_args)|g" \
         -e "s|@MHWD_ARGS@|${mhwd_args}|g" \
         -e "s|@PROFILE@|$3|g" \
         -i $1
