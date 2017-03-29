@@ -535,7 +535,7 @@ load_profile(){
     prepare_dir "${mnt_dir}"
 
     prepare_dir "${iso_dir}"
-    user_own "${cache_dir_iso}"
+    user_own "${cache_dir_iso}" "-R"
 }
 
 prepare_profile(){
