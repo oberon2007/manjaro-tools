@@ -161,32 +161,41 @@ make_sfs() {
 
 assemble_iso(){
     msg "Creating ISO image..."
-    local iso_publisher iso_app_id
+    local iso_publisher iso_app_id mod_date
 
     iso_publisher="$(get_osname) <$(get_disturl)>"
 
     iso_app_id="$(get_osname) Live/Rescue CD"
 
+    mod_date=$(date -u +%Y-%m-%d-%H-%M-%S-00  | sed -e s/-//g)
+
+#     touch ${iso_root}/boot/grub/${mod_date}
+
     xorriso -as mkisofs \
+        --modification-date=${mod_date} \
         --protective-msdos-label \
         -volid "${iso_label}" \
         -appid "${iso_app_id}" \
         -publisher "${iso_publisher}" \
         -preparer "Prepared by manjaro-tools/${0##*/}" \
-        -e /efi.img \
+        -r -graft-points -no-pad \
+        --sort-weight 0 / \
+        --sort-weight 1 /boot \
+        --grub2-mbr ${iso_root}/boot/grub/i386-pc/boot_hybrid.img \
+        -partition_offset 16 \
         -b boot/grub/i386-pc/eltorito.img \
         -c boot.catalog \
-        -no-emul-boot \
-        -boot-load-size 4 \
-        -boot-info-table \
-        -graft-points \
-        --grub2-boot-info \
-        --grub2-mbr ${iso_root}/boot/grub/i386-pc/boot_hybrid.img \
-        --sort-weight 0 / --sort-weight 1 /boot \
-        -isohybrid-gpt-basdat \
+        -no-emul-boot -boot-load-size 4 -boot-info-table --grub2-boot-info \
         -eltorito-alt-boot \
-        -output "${iso_dir}/${iso_file}" \
-        "${iso_root}/"
+        -append_partition 2 0xef ${iso_root}/efi.img \
+        -e --interval:appended_partition_2:all:: \
+        -no-emul-boot \
+        -iso-level 3 \
+        -o ${iso_dir}/${iso_file} \
+        ${iso_root}/
+
+#         arg to add with xorriso-1.4.7
+#         -iso_mbr_part_type 0x00
 }
 
 # Build ISO
@@ -374,16 +383,13 @@ make_image_boot() {
 
 configure_grub(){
     local default_args="misobasedir=${iso_name} misolabel=${iso_label}" \
-        video_args="nouveau.modeset=1 i915.modeset=1 radeon.modeset=1" \
-        boot_args=('quiet') mhwd_args="nonfree=${nonfree_mhwd}"
+        boot_args=('quiet')
     [[ ${initsys} == 'systemd' ]] && boot_args+=('systemd.show_status=1')
 
     sed -e "s|@DIST_NAME@|${dist_name}|g" \
         -e "s|@ARCH@|${target_arch}|g" \
         -e "s|@DEFAULT_ARGS@|${default_args}|g" \
-        -e "s|@VIDEO_ARGS@|${video_args}|g" \
         -e "s|@BOOT_ARGS@|${boot_args[*]}|g" \
-        -e "s|@MHWD_ARGS@|${mhwd_args}|g" \
         -e "s|@PROFILE@|${profile}|g" \
         -i $1
 }
@@ -392,7 +398,7 @@ make_grub(){
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
         msg "Prepare [/iso/boot/grub]"
 
-        local path="${work_dir}/rootfs"
+        local path="${work_dir}/livefs"
 
         prepare_grub "${path}" "${iso_root}"
 
