@@ -370,7 +370,7 @@ write_calamares_yaml(){
         for conf in "${yaml_dir}"/etc/calamares/modules/*.conf "${yaml_dir}"/etc/calamares/settings.conf; do
             check_yaml "$conf"
         done
-	fi
+    fi
 }
 
 write_netgroup_yaml(){
@@ -385,7 +385,7 @@ write_netgroup_yaml(){
     for p in ${packages[@]};do
         echo "       - $p" >> "$2"
     done
-	${validate} && check_yaml "$2"
+    ${validate} && check_yaml "$2"
 }
 
 write_pacman_group_yaml(){

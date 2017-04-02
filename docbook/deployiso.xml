@@ -77,12 +77,6 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
             </varlistentry>
 
             <varlistentry>
-                <term><option>-c</option></term>
-
-                <listitem><para>Create new remote release.</para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>-l</option></term>
 
                 <listitem><para>Limit bandwidth in kB/s.</para></listitem>

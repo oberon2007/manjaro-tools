@@ -161,15 +161,9 @@ make_sfs() {
 
 assemble_iso(){
     msg "Creating ISO image..."
-    local iso_publisher iso_app_id mod_date
-
-    iso_publisher="$(get_osname) <$(get_disturl)>"
-
-    iso_app_id="$(get_osname) Live/Rescue CD"
-
-    mod_date=$(date -u +%Y-%m-%d-%H-%M-%S-00  | sed -e s/-//g)
-
-#     touch ${iso_root}/boot/grub/${mod_date}
+    local iso_publisher="$(get_osname) <$(get_disturl)>" \
+        iso_app_id="$(get_osname) Live/Rescue CD" \
+        mod_date=$(date -u +%Y-%m-%d-%H-%M-%S-00  | sed -e s/-//g)
 
     xorriso -as mkisofs \
         --modification-date=${mod_date} \
@@ -394,6 +388,10 @@ configure_grub(){
         -i $1
 }
 
+configure_grub_theme(){
+    sed -e "s|@ISO_NAME@|${iso_name}|" -i "$1"
+}
+
 make_grub(){
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
         msg "Prepare [/iso/boot/grub]"
@@ -403,6 +401,7 @@ make_grub(){
         prepare_grub "${path}" "${iso_root}"
 
         configure_grub "${iso_root}/boot/grub/kernels.cfg"
+        configure_grub_theme "${iso_root}/boot/grub/variable.cfg"
 
         : > ${work_dir}/build.${FUNCNAME}
         msg "Done [/iso/boot/grub]"

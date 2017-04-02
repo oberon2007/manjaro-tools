@@ -45,13 +45,14 @@ prepare_boot_extras(){
 
 prepare_grub(){
     local platform=i386-pc img='core.img' grub=$2/boot/grub efi=$2/efi/boot \
-        data_live=$1/usr/share/grub lib=/usr/lib/grub prefix=/boot/grub data=/usr/share/grub
+        data_live=$1/usr/share/grub lib=usr/lib/grub prefix=/boot/grub data=/usr/share/grub \
+        path="${work_dir}/rootfs"
 
     prepare_dir ${grub}/${platform}
 
     cp ${data_live}/cfg/*.cfg ${grub}
 
-    cp ${lib}/${platform}/* ${grub}/${platform}
+    cp ${path}/${lib}/${platform}/* ${grub}/${platform}
 
     msg2 "Building %s ..." "${img}"
 
@@ -73,7 +74,7 @@ prepare_grub(){
     prepare_dir ${efi}
     prepare_dir ${grub}/${platform}
 
-    cp ${lib}/${platform}/* ${grub}/${platform}
+    cp ${path}/${lib}/${platform}/* ${grub}/${platform}
 
     msg2 "Building %s ..." "${img}"
 
