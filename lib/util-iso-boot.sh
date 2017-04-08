@@ -44,15 +44,14 @@ prepare_boot_extras(){
 }
 
 prepare_grub(){
-    local platform=i386-pc img='core.img' grub=$2/boot/grub efi=$2/efi/boot \
-        data_live=$1/usr/share/grub lib=usr/lib/grub prefix=/boot/grub data=/usr/share/grub \
-        path="${work_dir}/rootfs"
+    local platform=i386-pc img='core.img' grub=$3/boot/grub efi=$3/efi/boot \
+        lib=$1/usr/lib/grub prefix=/boot/grub theme=$2/usr/share/grub data=$1/usr/share/grub
 
     prepare_dir ${grub}/${platform}
 
-    cp ${data_live}/cfg/*.cfg ${grub}
+    cp ${theme}/cfg/*.cfg ${grub}
 
-    cp ${path}/${lib}/${platform}/* ${grub}/${platform}
+    cp ${lib}/${platform}/* ${grub}/${platform}
 
     msg2 "Building %s ..." "${img}"
 
@@ -74,18 +73,18 @@ prepare_grub(){
     prepare_dir ${efi}
     prepare_dir ${grub}/${platform}
 
-    cp ${path}/${lib}/${platform}/* ${grub}/${platform}
+    cp ${lib}/${platform}/* ${grub}/${platform}
 
     msg2 "Building %s ..." "${img}"
 
     grub-mkimage -d ${grub}/${platform} -o ${efi}/${img} -O ${platform} -p ${prefix} iso9660
 
     prepare_dir ${grub}/themes
-    cp -r ${data_live}/themes/${iso_name}-live ${grub}/themes/
+    cp -r ${theme}/themes/${iso_name}-live ${grub}/themes/
     cp ${data}/unicode.pf2 ${grub}
-    cp -r ${data_live}/{locales,tz} ${grub}
+    cp -r ${theme}/{locales,tz} ${grub}
 
-    local size=4M mnt="${mnt_dir}/efiboot" efi_img="$2/efi.img"
+    local size=4M mnt="${mnt_dir}/efiboot" efi_img="$3/efi.img"
     msg2 "Creating fat image of %s ..." "${size}"
     truncate -s ${size} "${efi_img}"
     mkfs.fat -n MISO_EFI "${efi_img}" &>/dev/null
