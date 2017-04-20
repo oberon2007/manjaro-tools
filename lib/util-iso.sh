@@ -396,7 +396,9 @@ make_grub(){
     if [[ ! -e ${work_dir}/build.${FUNCNAME} ]]; then
         msg "Prepare [/iso/boot/grub]"
 
-        prepare_grub "${work_dir}/rootfs" "${work_dir}/livefs" "${iso_root}"
+        local path="${work_dir}/livefs"
+
+        prepare_grub "${path}" "${iso_root}"
 
         configure_grub "${iso_root}/boot/grub/kernels.cfg"
         configure_grub_theme "${iso_root}/boot/grub/variable.cfg"
