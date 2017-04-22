@@ -9,6 +9,15 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+in_array() {
+    local needle=$1; shift
+    local item
+    for item in "$@"; do
+        [[ $item = $needle ]] && return 0 # Found
+    done
+    return 1 # Not Found
+}
+
 # $1: sofile
 # $2: soarch
 process_sofile() {

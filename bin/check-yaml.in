@@ -83,7 +83,7 @@ display_settings(){
 
 load_user_info
 
-load_config "${USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
+load_config "${MT_USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
 
 # to force old way to have buildiso run in iso-profiles dir
 # run_dir=$(pwd)
@@ -112,7 +112,7 @@ usage() {
     exit $1
 }
 
-orig_argv=("$@")
+orig_argv=("$0" "$@")
 
 opts='p:a:i:k:gcvqh'
 
@@ -133,7 +133,7 @@ done
 
 shift $(($OPTIND - 1))
 
-check_root "$0" "${orig_argv[@]}"
+check_root
 
 prepare_dir "${tmp_dir}"
 

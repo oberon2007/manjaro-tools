@@ -35,7 +35,7 @@ display_settings(){
 
 load_user_info
 
-load_config "${USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
+load_config "${MT_USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
 
 automount=false
 pretend=false
@@ -55,7 +55,7 @@ usage() {
     exit $1
 }
 
-orig_argv=("$@")
+orig_argv=("$0" "$@")
 
 opts=':haq'
 
@@ -69,7 +69,7 @@ while getopts ${opts} arg; do
 done
 shift $(( OPTIND - 1 ))
 
-check_root "$0" "${orig_argv[@]}"
+check_root
 
 if ${automount};then
     chrootdir=/mnt

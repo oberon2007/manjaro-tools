@@ -20,6 +20,7 @@ SYSCONFDIR='@sysconfdir@'
 [[ -r ${LIBDIR}/util-msg.sh ]] && source ${LIBDIR}/util-msg.sh
 
 import ${LIBDIR}/util.sh
+import ${LIBDIR}/util-chroot.sh
 import ${LIBDIR}/util-pkg.sh
 import ${LIBDIR}/util-pkg-chroot.sh
 
@@ -69,8 +70,9 @@ display_settings(){
 
 load_user_info
 
-load_config "${USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
-load_vars "$USER_HOME/.makepkg.conf" || load_vars /etc/makepkg.conf
+load_config "${MT_USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
+load_vars "${PAC_USERCONFDIR}/makepkg.conf" || load_vars "$USER_HOME/.makepkg.conf"
+load_vars /etc/makepkg.conf
 
 install_pkgs=()
 
@@ -103,7 +105,7 @@ usage() {
     exit $1
 }
 
-orig_argv=("$@")
+orig_argv=("$0" "$@")
 
 opts='p:a:b:r:i:cwnsuqh'
 
@@ -127,7 +129,7 @@ done
 
 shift $(($OPTIND - 1))
 
-check_root "$0" "${orig_argv[@]}"
+check_root
 
 prepare_dir "${log_dir}"
 

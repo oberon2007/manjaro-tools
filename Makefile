@@ -1,4 +1,4 @@
-Version=0.15.0
+Version=0.16.0
 
 PREFIX = /usr/local
 SYSCONFDIR = /etc
@@ -18,6 +18,7 @@ LIBS_BASE = \
 	lib/util.sh \
 	lib/util-mount.sh \
 	lib/util-msg.sh \
+	lib/util-chroot.sh \
 	lib/util-fstab.sh
 
 SHARED_BASE = \

@@ -17,7 +17,9 @@ LIBDIR='@libdir@'
 
 import ${LIBDIR}/util.sh
 
-load_vars "$HOME/.makepkg.conf"
+load_user_info
+
+load_vars "${PAC_USERCONFDIR}/makepkg.conf" || load_vars "$USER_HOME/.makepkg.conf"
 load_vars /etc/makepkg.conf
 
 if [ ! -e "$1" ]; then

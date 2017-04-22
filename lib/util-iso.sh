@@ -9,8 +9,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-import ${LIBDIR}/util-iso-image.sh
-import ${LIBDIR}/util-iso-boot.sh
+import ${LIBDIR}/util-iso-chroot.sh
 import ${LIBDIR}/util-yaml.sh
 
 error_function() {
@@ -66,6 +65,40 @@ trap_exit() {
     umount_fs
     trap -- "$sig"
     kill "-$sig" "$$"
+}
+
+configure_thus(){
+    msg2 "Configuring Thus ..."
+    source "$1/etc/mkinitcpio.d/${kernel}.preset"
+    local conf="$1/etc/thus.conf"
+    echo "[distribution]" > "$conf"
+    echo "DISTRIBUTION_NAME = \"${dist_name} Linux\"" >> "$conf"
+    echo "DISTRIBUTION_VERSION = \"${dist_release}\"" >> "$conf"
+    echo "SHORT_NAME = \"${dist_name}\"" >> "$conf"
+    echo "[install]" >> "$conf"
+    echo "LIVE_MEDIA_SOURCE = \"/run/miso/bootmnt/${iso_name}/${target_arch}/rootfs.sfs\"" >> "$conf"
+    echo "LIVE_MEDIA_DESKTOP = \"/run/miso/bootmnt/${iso_name}/${target_arch}/desktopfs.sfs\"" >> "$conf"
+    echo "LIVE_MEDIA_TYPE = \"squashfs\"" >> "$conf"
+    echo "LIVE_USER_NAME = \"${username}\"" >> "$conf"
+    echo "KERNEL = \"${kernel}\"" >> "$conf"
+    echo "VMLINUZ = \"$(echo ${ALL_kver} | sed s'|/boot/||')\"" >> "$conf"
+    echo "INITRAMFS = \"$(echo ${default_image} | sed s'|/boot/||')\"" >> "$conf"
+    echo "FALLBACK = \"$(echo ${fallback_image} | sed s'|/boot/||')\"" >> "$conf"
+
+    if [[ -f $1/usr/share/applications/thus.desktop && -f $1/usr/bin/kdesu ]];then
+        sed -i -e 's|sudo|kdesu|g' $1/usr/share/applications/thus.desktop
+    fi
+}
+
+configure_live_image(){
+    msg "Configuring [livefs]"
+    configure_hosts "$1"
+    configure_system "$1"
+    configure_services "$1"
+    configure_calamares "$1"
+    [[ ${edition} == "sonar" ]] && configure_thus "$1"
+    write_live_session_conf "$1"
+    msg "Done configuring [livefs]"
 }
 
 make_sig () {

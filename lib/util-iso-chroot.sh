@@ -76,6 +76,10 @@ configure_mhwd_drivers(){
     fi
 }
 
+configure_hosts(){
+    sed -e "s|localhost.localdomain|localhost.localdomain ${hostname}|" -i $1/etc/hosts
+}
+
 configure_lsb(){
     if [ -e $1/etc/lsb-release ] ; then
         msg2 "Configuring lsb-release"
@@ -150,10 +154,6 @@ write_live_session_conf(){
     fi
 }
 
-configure_hosts(){
-    sed -e "s|localhost.localdomain|localhost.localdomain ${hostname}|" -i $1/etc/hosts
-}
-
 configure_system(){
     case ${initsys} in
         'systemd')
@@ -176,91 +176,12 @@ configure_system(){
     echo ${hostname} > $1/etc/hostname
 }
 
-configure_thus(){
-    msg2 "Configuring Thus ..."
-    source "$1/etc/mkinitcpio.d/${kernel}.preset"
-    local conf="$1/etc/thus.conf"
-    echo "[distribution]" > "$conf"
-    echo "DISTRIBUTION_NAME = \"${dist_name} Linux\"" >> "$conf"
-    echo "DISTRIBUTION_VERSION = \"${dist_release}\"" >> "$conf"
-    echo "SHORT_NAME = \"${dist_name}\"" >> "$conf"
-    echo "[install]" >> "$conf"
-    echo "LIVE_MEDIA_SOURCE = \"/run/miso/bootmnt/${iso_name}/${target_arch}/rootfs.sfs\"" >> "$conf"
-    echo "LIVE_MEDIA_DESKTOP = \"/run/miso/bootmnt/${iso_name}/${target_arch}/desktopfs.sfs\"" >> "$conf"
-    echo "LIVE_MEDIA_TYPE = \"squashfs\"" >> "$conf"
-    echo "LIVE_USER_NAME = \"${username}\"" >> "$conf"
-    echo "KERNEL = \"${kernel}\"" >> "$conf"
-    echo "VMLINUZ = \"$(echo ${ALL_kver} | sed s'|/boot/||')\"" >> "$conf"
-    echo "INITRAMFS = \"$(echo ${default_image} | sed s'|/boot/||')\"" >> "$conf"
-    echo "FALLBACK = \"$(echo ${fallback_image} | sed s'|/boot/||')\"" >> "$conf"
-
-    if [[ -f $1/usr/share/applications/thus.desktop && -f $1/usr/bin/kdesu ]];then
-        sed -i -e 's|sudo|kdesu|g' $1/usr/share/applications/thus.desktop
-    fi
-}
-
-configure_live_image(){
-    msg "Configuring [livefs]"
-    configure_hosts "$1"
-    configure_system "$1"
-    configure_services "$1"
-    configure_calamares "$1"
-    [[ ${edition} == "sonar" ]] && configure_thus "$1"
-    write_live_session_conf "$1"
-    msg "Done configuring [livefs]"
-}
-
 make_repo(){
     repo-add $1${mhwd_repo}/mhwd.db.tar.gz $1${mhwd_repo}/*pkg*z
 }
 
-copy_from_cache(){
-    local list="${tmp_dir}"/mhwd-cache.list
-    chroot-run \
-        -r "${mountargs_ro}" \
-        -w "${mountargs_rw}" \
-        -B "${build_mirror}/${target_branch_iso}" \
-        "$1" \
-        pacman -v -Syw $2 --noconfirm || return 1
-    chroot-run \
-        -r "${mountargs_ro}" \
-        -w "${mountargs_rw}" \
-        -B "${build_mirror}/${target_branch_iso}" \
-        "$1" \
-        pacman -v -Sp $2 --noconfirm > "$list"
-    sed -ni '/.pkg.tar.xz/p' "$list"
-    sed -i "s/.*\///" "$list"
-
-    msg2 "Copying mhwd package cache ..."
-    rsync -v --files-from="$list" /var/cache/pacman/pkg "$1${mhwd_repo}"
-}
-
-chroot_create(){
-    [[ "${1##*/}" == "rootfs" ]] && local flag="-L"
-    setarch "${target_arch}" \
-        mkchroot ${mkchroot_args[*]} ${flag} $@
-}
-
 clean_iso_root(){
     msg2 "Deleting isoroot [%s] ..." "${1##*/}"
-    rm -rf --one-file-system "$1"
-}
-
-chroot_clean(){
-    msg "Cleaning up ..."
-    for image in "$1"/*fs; do
-        [[ -d ${image} ]] || continue
-        local name=${image##*/}
-        if [[ $name != "mhwdfs" ]];then
-            msg2 "Deleting chroot [%s] (%s) ..." "$name" "${1##*/}"
-            lock 9 "${image}.lock" "Locking chroot '${image}'"
-            if [[ "$(stat -f -c %T "${image}")" == btrfs ]]; then
-                { type -P btrfs && btrfs subvolume delete "${image}"; } #&> /dev/null
-            fi
-        rm -rf --one-file-system "${image}"
-        fi
-    done
-    exec 9>&-
     rm -rf --one-file-system "$1"
 }
 
@@ -310,4 +231,136 @@ clean_up_image(){
         if [[ -f "$file" ]]; then
             rm $file
         fi
+}
+
+copy_from_cache(){
+    local list="${tmp_dir}"/mhwd-cache.list
+    chroot-run \
+        -r "${bindmounts_ro[*]}" \
+        -w "${bindmounts_rw[*]}" \
+        -B "${build_mirror}/${target_branch}" \
+        "$1" \
+        pacman -v -Syw $2 --noconfirm || return 1
+    chroot-run \
+        -r "${bindmounts_ro[*]}" \
+        -w "${bindmounts_rw[*]}" \
+        -B "${build_mirror}/${target_branch}" \
+        "$1" \
+        pacman -v -Sp $2 --noconfirm > "$list"
+    sed -ni '/.pkg.tar.xz/p' "$list"
+    sed -i "s/.*\///" "$list"
+
+    msg2 "Copying mhwd package cache ..."
+    rsync -v --files-from="$list" /var/cache/pacman/pkg "$1${mhwd_repo}"
+}
+
+chroot_create(){
+    [[ "${1##*/}" == "rootfs" ]] && local flag="-L"
+    setarch "${target_arch}" \
+        mkchroot ${mkchroot_args[*]} ${flag} $@
+}
+
+chroot_clean(){
+    msg "Cleaning up ..."
+    for image in "$1"/*fs; do
+        [[ -d ${image} ]] || continue
+        local name=${image##*/}
+        if [[ $name != "mhwdfs" ]];then
+            msg2 "Deleting chroot [%s] (%s) ..." "$name" "${1##*/}"
+            lock 9 "${image}.lock" "Locking chroot '${image}'"
+            if [[ "$(stat -f -c %T "${image}")" == btrfs ]]; then
+                { type -P btrfs && btrfs subvolume delete "${image}"; } #&> /dev/null
+            fi
+        rm -rf --one-file-system "${image}"
+        fi
+    done
+    exec 9>&-
+    rm -rf --one-file-system "$1"
+}
+
+prepare_initcpio(){
+    msg2 "Copying initcpio ..."
+    cp /etc/initcpio/hooks/miso* $1/etc/initcpio/hooks
+    cp /etc/initcpio/install/miso* $1/etc/initcpio/install
+    cp /etc/initcpio/miso_shutdown $1/etc/initcpio
+}
+
+prepare_initramfs(){
+    cp ${DATADIR}/mkinitcpio.conf $1/etc/mkinitcpio-${iso_name}.conf
+    local _kernver=$(cat $1/usr/lib/modules/*/version)
+    if [[ -n ${gpgkey} ]]; then
+        su ${OWNER} -c "gpg --export ${gpgkey} >${MT_USERCONFDIR}/gpgkey"
+        exec 17<>${MT_USERCONFDIR}/gpgkey
+    fi
+    MISO_GNUPG_FD=${gpgkey:+17} chroot-run $1 \
+        /usr/bin/mkinitcpio -k ${_kernver} \
+        -c /etc/mkinitcpio-${iso_name}.conf \
+        -g /boot/initramfs.img
+
+    if [[ -n ${gpgkey} ]]; then
+        exec 17<&-
+    fi
+    if [[ -f ${MT_USERCONFDIR}/gpgkey ]]; then
+        rm ${MT_USERCONFDIR}/gpgkey
+    fi
+}
+
+prepare_boot_extras(){
+    cp $1/boot/intel-ucode.img $2/intel_ucode.img
+    cp $1/usr/share/licenses/intel-ucode/LICENSE $2/intel_ucode.LICENSE
+    cp $1/boot/memtest86+/memtest.bin $2/memtest
+    cp $1/usr/share/licenses/common/GPL2/license.txt $2/memtest.COPYING
+}
+
+prepare_grub(){
+    local platform=i386-pc img='core.img' grub=$3/boot/grub efi=$3/efi/boot \
+        lib=$1/usr/lib/grub prefix=/boot/grub theme=$2/usr/share/grub data=$1/usr/share/grub
+
+    prepare_dir ${grub}/${platform}
+
+    cp ${theme}/cfg/*.cfg ${grub}
+
+    cp ${lib}/${platform}/* ${grub}/${platform}
+
+    msg2 "Building %s ..." "${img}"
+
+    grub-mkimage -d ${grub}/${platform} -o ${grub}/${platform}/${img} -O ${platform} -p ${prefix} biosdisk iso9660
+
+    cat ${grub}/${platform}/cdboot.img ${grub}/${platform}/${img} > ${grub}/${platform}/eltorito.img
+
+    case ${target_arch} in
+        'i686')
+            platform=i386-efi
+            img=bootia32.efi
+        ;;
+        'x86_64')
+            platform=x86_64-efi
+            img=bootx64.efi
+        ;;
+    esac
+
+    prepare_dir ${efi}
+    prepare_dir ${grub}/${platform}
+
+    cp ${lib}/${platform}/* ${grub}/${platform}
+
+    msg2 "Building %s ..." "${img}"
+
+    grub-mkimage -d ${grub}/${platform} -o ${efi}/${img} -O ${platform} -p ${prefix} iso9660
+
+    prepare_dir ${grub}/themes
+    cp -r ${theme}/themes/${iso_name}-live ${grub}/themes/
+    cp ${data}/unicode.pf2 ${grub}
+    cp -r ${theme}/{locales,tz} ${grub}
+
+    local size=4M mnt="${mnt_dir}/efiboot" efi_img="$3/efi.img"
+    msg2 "Creating fat image of %s ..." "${size}"
+    truncate -s ${size} "${efi_img}"
+    mkfs.fat -n MISO_EFI "${efi_img}" &>/dev/null
+    prepare_dir "${mnt}"
+    mount_img "${efi_img}" "${mnt}"
+    prepare_dir ${mnt}/efi/boot
+    msg2 "Building %s ..." "${img}"
+    grub-mkimage -d ${grub}/${platform} -o ${mnt}/efi/boot/${img} -O ${platform} -p ${prefix} iso9660
+    umount_img "${mnt}"
 }
