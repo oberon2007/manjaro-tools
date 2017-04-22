@@ -16,7 +16,7 @@ SYSCONFDIR='@sysconfdir@'
 
 [[ -r ${LIBDIR}/util-msg.sh ]] && source ${LIBDIR}/util-msg.sh
 import ${LIBDIR}/util.sh
-import ${LIBDIR}/util-pkgtree.sh
+import ${LIBDIR}/util-pkg-tree.sh
 
 display_settings(){
     show_version
@@ -36,7 +36,7 @@ display_settings(){
 
 load_user_info
 
-load_config "${USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
+load_config "${MT_USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
 
 sync=false
 pretend=false
@@ -55,7 +55,7 @@ usage() {
     exit $1
 }
 
-orig_argv=("$@")
+orig_argv=("$0" "$@")
 
 opts='sacqh'
 
@@ -72,7 +72,7 @@ done
 
 shift $(($OPTIND - 1))
 
-check_root "$0" "${orig_argv[@]}"
+check_root
 
 prepare_dir "${tree_dir_abs}"
 

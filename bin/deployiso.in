@@ -63,7 +63,7 @@ display_settings(){
 
 load_user_info
 
-load_config "${USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
+load_config "${MT_USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
 
 run_dir=${cache_dir_iso}
 

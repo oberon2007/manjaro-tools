@@ -19,6 +19,7 @@ LIBDIR='@libdir@'
 
 import ${LIBDIR}/util.sh
 import ${LIBDIR}/util-mount.sh
+import ${LIBDIR}/util-chroot.sh
 
 newroot=/mnt
 
@@ -44,12 +45,11 @@ usage() {
 }
 
 # if [[ -z $1 || $1 = @(-h|--help) ]]; then
-#   usage
-#   exit $(( $# ? 0 : 1 ))
+#     usage
+#     exit $(( $# ? 0 : 1 ))
 # fi
-#
 
-orig_argv=("$@")
+orig_argv=("$0" "$@")
 
 opts=':C:cdGiM'
 
@@ -67,7 +67,7 @@ while getopts ${opts} arg; do
 done
 shift $(( OPTIND - 1 ))
 
-check_root "$0" "${orig_argv[@]}"
+check_root
 
 (( $# )) || die "No root directory specified"
 newroot=$1; shift
@@ -82,7 +82,7 @@ ${interactive} && pacman_args+=(--noconfirm)
 [[ -d $newroot ]] || die "%s is not a directory" "$newroot"
 
 if ! mountpoint -q "$newroot" && ! ${directory}; then
-die '%s is not a mountpoint!' "$newroot"
+    die '%s is not a mountpoint!' "$newroot"
 fi
 
 # create obligatory directories
@@ -97,7 +97,7 @@ if ! pacman -r "$newroot" -Sy "${pacman_args[@]}"; then
 fi
 
 # kill chroot process if needed (TODO: check if needed at all)
-kill_chroot_process "$newroot"
+# kill_chroot_process "$newroot"
 
 if ${copykeyring};then
     copy_keyring "$newroot"

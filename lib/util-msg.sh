@@ -11,11 +11,9 @@
 export LC_MESSAGES=C
 export LANG=C
 
-disable_colors(){
-    unset ALL_OFF BOLD BLUE GREEN RED YELLOW
-}
+declare ALL_OFF='' BOLD='' BLUE='' GREEN='' RED='' YELLOW=''
 
-enable_colors(){
+if [[ -t 2 ]]; then
     # prefer terminal safe colored and bold text when tput is supported
     if tput setaf 0 &>/dev/null; then
         ALL_OFF="$(tput sgr0)"
@@ -32,14 +30,8 @@ enable_colors(){
         YELLOW="${BOLD}\e[33m"
         BLUE="${BOLD}\e[34m"
     fi
-    readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
-}
-
-if [[ -t 2 ]]; then
-    enable_colors
-else
-    disable_colors
 fi
+readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
 
 plain() {
     local mesg=$1; shift
@@ -73,11 +65,40 @@ error() {
 
 stat_busy() {
     local mesg=$1; shift
-    printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}...${ALL_OFF}" >&2
+    printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}...${ALL_OFF}" "$@" >&2
 }
 
 stat_done() {
     printf "${BOLD}done${ALL_OFF}\n" >&2
+}
+
+lock_close() {
+	local fd=$1
+	exec {fd}>&-
+}
+
+lock() {
+    if ! [[ "/dev/fd/$1" -ef "$2" ]]; then
+        mkdir -p -- "$(dirname -- "$2")"
+        eval "exec $1>"'"$2"'
+    fi
+    if ! flock -n $1; then
+        stat_busy "$3"
+        flock $1
+        stat_done
+    fi
+}
+
+slock() {
+    if ! [[ "/dev/fd/$1" -ef "$2" ]]; then
+        mkdir -p -- "$(dirname -- "$2")"
+        eval "exec $1>"'"$2"'
+    fi
+    if ! flock -sn $1; then
+        stat_busy "$3"
+        flock -s $1
+        stat_done
+    fi
 }
 
 cleanup() {

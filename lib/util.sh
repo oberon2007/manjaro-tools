@@ -110,19 +110,9 @@ eval_build_list(){
     esac"
 }
 
-in_array() {
-    local needle=$1; shift
-    local item
-    for item in "$@"; do
-        [[ $item = $needle ]] && return 0 # Found
-    done
-    return 1 # Not Found
-}
-
 get_timer(){
     echo $(date +%s)
 }
-
 
 # $1: start timer
 elapsed_time(){
@@ -131,43 +121,6 @@ elapsed_time(){
 
 show_elapsed_time(){
     info "Time %s: %s minutes" "$1" "$(elapsed_time $2)"
-}
-
-lock() {
-    eval "exec $1>"'"$2"'
-    if ! flock -n $1; then
-        stat_busy "$3"
-        flock $1
-        stat_done
-    fi
-}
-
-slock() {
-    eval "exec $1>"'"$2"'
-    if ! flock -sn $1; then
-        stat_busy "$3"
-        flock -s $1
-        stat_done
-    fi
-}
-
-check_root() {
-    (( EUID == 0 )) && return
-    if type -P sudo >/dev/null; then
-        exec sudo -- "$@"
-    else
-        exec su root -c "$(printf ' %q' "$@")"
-    fi
-}
-
-copy_mirrorlist(){
-    cp -a /etc/pacman.d/mirrorlist "$1/etc/pacman.d/"
-}
-
-copy_keyring(){
-    if [[ -d /etc/pacman.d/gnupg ]] && [[ ! -d $1/etc/pacman.d/gnupg ]]; then
-        cp -a /etc/pacman.d/gnupg "$1/etc/pacman.d/"
-    fi
 }
 
 load_vars() {
@@ -235,7 +188,7 @@ init_buildpkg(){
 
     make_conf_dir="${SYSCONFDIR}/make.conf.d"
 
-    [[ -d ${USERCONFDIR}/pkg.list.d ]] && list_dir_pkg=${USERCONFDIR}/pkg.list.d
+    [[ -d ${MT_USERCONFDIR}/pkg.list.d ]] && list_dir_pkg=${MT_USERCONFDIR}/pkg.list.d
 
     [[ -z ${build_list_pkg} ]] && build_list_pkg='default'
 
@@ -291,7 +244,7 @@ init_buildiso(){
 
     list_dir_iso="${SYSCONFDIR}/iso.list.d"
 
-    [[ -d ${USERCONFDIR}/iso.list.d ]] && list_dir_iso=${USERCONFDIR}/iso.list.d
+    [[ -d ${MT_USERCONFDIR}/iso.list.d ]] && list_dir_iso=${MT_USERCONFDIR}/iso.list.d
 
     [[ -z ${build_list_iso} ]] && build_list_iso='default'
 
@@ -656,7 +609,7 @@ write_repo_conf(){
     for r in ${repos[@]}; do
         path=${r%/repo_info}
         name=${path##*/}
-        echo "run_dir=$path" > ${USERCONFDIR}/$name.conf
+        echo "run_dir=$path" > ${MT_USERCONFDIR}/$name.conf
     done
 }
 
@@ -669,13 +622,14 @@ load_user_info(){
         USER_HOME=$HOME
     fi
 
-    USERCONFDIR="$USER_HOME/.config/manjaro-tools"
-    prepare_dir "${USERCONFDIR}"
+    MT_USERCONFDIR="${XDG_CONFIG_HOME:-$USER_HOME/.config}/manjaro-tools"
+    PAC_USERCONFDIR="${XDG_CONFIG_HOME:-$USER_HOME/.config}/pacman"
+    prepare_dir "${MT_USERCONFDIR}"
 }
 
 load_run_dir(){
-    [[ -f ${USERCONFDIR}/$1.conf ]] || write_repo_conf
-    [[ -r ${USERCONFDIR}/$1.conf ]] && source ${USERCONFDIR}/$1.conf
+    [[ -f ${MT_USERCONFDIR}/$1.conf ]] || write_repo_conf
+    [[ -r ${MT_USERCONFDIR}/$1.conf ]] && source ${MT_USERCONFDIR}/$1.conf
     return 0
 }
 
@@ -685,41 +639,11 @@ show_version(){
 }
 
 show_config(){
-    if [[ -f ${USERCONFDIR}/manjaro-tools.conf ]]; then
+    if [[ -f ${MT_USERCONFDIR}/manjaro-tools.conf ]]; then
         msg2 "config: %s" "~/.config/manjaro-tools/manjaro-tools.conf"
     else
         msg2 "config: %s" "${manjaro_tools_conf}"
     fi
-}
-
-# $1: chroot
-kill_chroot_process(){
-    # enable to have more debug info
-    #msg "machine-id (etc): $(cat $1/etc/machine-id)"
-    #[[ -e $1/var/lib/dbus/machine-id ]] && msg "machine-id (lib): $(cat $1/var/lib/dbus/machine-id)"
-    #msg "running processes: "
-    #lsof | grep $1
-
-    local prefix="$1" flink pid name
-    for root_dir in /proc/*/root; do
-        flink=$(readlink $root_dir)
-        if [ "x$flink" != "x" ]; then
-            if [ "x${flink:0:${#prefix}}" = "x$prefix" ]; then
-                # this process is in the chroot...
-                pid=$(basename $(dirname "$root_dir"))
-                name=$(ps -p $pid -o comm=)
-                info "Killing chroot process: %s (%s)" "$name" "$pid"
-                kill -9 "$pid"
-            fi
-        fi
-    done
-}
-
-create_min_fs(){
-    msg "Creating install root at %s" "$1"
-    mkdir -m 0755 -p $1/var/{cache/pacman/pkg,lib/pacman,log} $1/{dev,run,etc}
-    mkdir -m 1777 -p $1/tmp
-    mkdir -m 0555 -p $1/{sys,proc}
 }
 
 is_valid_init(){
@@ -772,21 +696,11 @@ track_iso() {
     echo "ID ${fs_count} - ${working_dir} - $(date)" >> "${trackfile}"
 }
 
-is_btrfs() {
-    [[ -e "$1" && "$(stat -f -c %T "$1")" == btrfs ]]
-}
-
-subvolume_delete_recursive() {
-    local subvol
-
-    is_btrfs "$1" || return 0
-
-    while IFS= read -d $'\0' -r subvol; do
-        if ! btrfs subvolume delete "$subvol" &>/dev/null; then
-            error "Unable to delete subvolume %s" "$subvol"
-            return 1
-        fi
-    done < <(find "$1" -xdev -depth -inum 256 -print0)
-
-    return 0
+check_root() {
+    (( EUID == 0 )) && return
+    if type -P sudo >/dev/null; then
+        exec sudo -- "${orig_argv[@]}"
+    else
+        exec su root -c "$(printf ' %q' "${orig_argv[@]}")"
+    fi
 }

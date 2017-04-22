@@ -16,11 +16,15 @@ LIBDIR='@libdir@'
 [[ -r ${LIBDIR}/util-msg.sh ]] && source ${LIBDIR}/util-msg.sh
 
 import ${LIBDIR}/util.sh
+import ${LIBDIR}/util-chroot.sh
 
 working_dir=''
+files=()
+
 build_locales=false
 keep_mirrors=false
 keep_flag=''
+nosetarch=false
 
 usage() {
     echo "Usage: ${0##*/} [options] working-dir package-list..."
@@ -29,6 +33,8 @@ usage() {
     echo '    -M <file>     Location of a makepkg config file'
     echo '    -S <file>     Location of a pacman-mirrors config file'
     echo '    -c <dir>      Set pacman cache'
+    echo '    -f <file>     Copy file from the host to the chroot'
+    echo '    -s            Do not run setarch'
     echo '    -L            Use build locale.gen en/de'
     echo '    -B            Use custom build mirror'
     echo '    -K            Keep mirrorlist (-B)'
@@ -37,9 +43,9 @@ usage() {
     exit 1
 }
 
-orig_argv=("$@")
+orig_argv=("$0" "$@")
 
-opts='hLKC:M:S:c:B:'
+opts='hLKC:M:S:c:B:f:s'
 
 while getopts ${opts} arg; do
     case "${arg}" in
@@ -47,18 +53,20 @@ while getopts ${opts} arg; do
         M) makepkg_conf="$OPTARG" ;;
         S) mirrors_conf="$OPTARG" ;;
         c) cache_dir="$OPTARG" ;;
+        f) files+=("$OPTARG") ;;
+        s) nosetarch=true ;;
         L) build_locales=true ;;
         B) build_mirror="$OPTARG" ;;
         K) keep_mirrors=true; keep_flag='-K' ;;
         h|?) usage ;;
-        *) error "invalid argument '$arg'"; usage ;;
+        *) error "invalid argument '%s'" "$arg"; usage ;;
     esac
 done
 shift $(($OPTIND - 1))
 
 (( $# < 2 )) && die 'You must specify a directory and one or more packages.'
 
-check_root "$0" "${orig_argv[@]}"
+check_root
 
 working_dir="$(readlink -f $1)"
 shift 1
@@ -89,6 +97,11 @@ if is_btrfs "$working_dir"; then
 	chmod 0755 "$working_dir"
 fi
 
+for file in "${files[@]}"; do
+    mkdir -p "$(dirname "$working_dir$file")"
+    cp "$file" "$working_dir$file"
+done
+
 # Workaround when creating a chroot in a branch different of the host
 if [[ -n $pac_conf ]] && [[ -n $mirrors_conf ]] && [[ -n ${build_mirror} ]]; then
     url=${build_mirror}'/$repo/$arch'
@@ -96,11 +109,21 @@ if [[ -n $pac_conf ]] && [[ -n $mirrors_conf ]] && [[ -n ${build_mirror} ]]; the
     pac_base="$working_dir/pacman-basestrap.conf"
     sed "s#Include = /etc/pacman.d/mirrorlist#Server = ${url}#g" $pac_conf > $pac_base
 
+    _env=()
+    while read -r varname; do
+        _env+=("$varname=${!varname}")
+    done < <(declare -x | sed -r 's/^declare -x ([^=]*)=.*/\1/' | grep -i '_proxy$')
+    env -i "${_env[@]}" \
     basestrap -GMcd ${pac_base:+-C "$pac_base"} "$working_dir" \
     "${cache_dirs[@]/#/--cachedir=}" "$@" || die 'Failed to install all packages'
 
     [[ -f "$pac_base" ]] && rm "$pac_base"
 else
+    _env=()
+    while read -r varname; do
+        _env+=("$varname=${!varname}")
+    done < <(declare -x | sed -r 's/^declare -x ([^=]*)=.*/\1/' | grep -i '_proxy$')
+    env -i "${_env[@]}" \
     basestrap -GMcd ${pac_conf:+-C "$pac_conf"} "$working_dir" \
     "${cache_dirs[@]/#/--cachedir=}" "$@" || die 'Failed to install all packages'
 fi
@@ -117,6 +140,7 @@ if ${build_locales};then
 fi
 
 chroot_args=(${pac_conf:+-C "$pac_conf"} ${makepkg_conf:+-M "$makepkg_conf"} ${mirrors_conf:+-S "$mirrors_conf"} ${build_mirror:+-B "$build_mirror"} ${cache_dir:+-c "$cache_dir"} ${keep_flag})
+${nosetarch} && chroot_args+=(${nosetarch:+-s})
 
 exec chroot-run \
     ${chroot_args[*]} \
