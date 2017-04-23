@@ -8,15 +8,16 @@ import ${LIBDIR}/util.sh
 
 for f in $(find . -maxdepth 1 -name '*.iso' | cut -d'/' -f2); do
     if [[ ! -e $f.md5 ]]; then
-        create_chksums $f
+        create_chksums
     elif [[ $f -nt $f.md5 ]]; then
-        create_chksums $f
+        create_chksums
     else
         info "checksums for [$f] already created"
     fi
     if [[ ! -e $f.sig ]]; then
         signfile $f
     elif [[ $f -nt $f.sig ]]; then
+        rm $f.sig
         signfile $f
     else
         info "signature file for [$f] already created"
