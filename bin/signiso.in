@@ -4,9 +4,21 @@ LIBDIR='/usr/lib/manjaro-tools'
 
 [[ -r ${LIBDIR}/util-msg.sh ]] && source ${LIBDIR}/util-msg.sh
 
+import ${LIBDIR}/util.sh
+
 for f in $(find . -maxdepth 1 -name '*.iso' | cut -d'/' -f2); do
-  msg2 "creating checksums for [$f]"
-  md5sum $f > $f.md5
-  sha1sum $f > $f.sha1
-  signfile $f
+    if [[ ! -e $f.md5 ]]; then
+        create_chksums $f
+    elif [[ $f -nt $f.md5 ]]; then
+        create_chksums $f
+    else
+        info "checksums for [$f] already created"
+    fi
+    if [[ ! -e $f.sig ]]; then
+        signfile $f
+    elif [[ $f -nt $f.sig ]]; then
+        signfile $f
+    else
+        info "signature file for [$f] already created"
+    fi
 done
