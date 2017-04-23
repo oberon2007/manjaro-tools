@@ -128,7 +128,7 @@ else
     "${cache_dirs[@]/#/--cachedir=}" "$@" || die 'Failed to install all packages'
 fi
 
-track_iso
+echo "$version" > "$working_dir/.manjaro-tools"
 
 if ${build_locales};then
     info "Using build locales ..."

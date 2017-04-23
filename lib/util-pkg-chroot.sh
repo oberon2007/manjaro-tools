@@ -51,8 +51,8 @@ prepare_conf(){
 
     pacman_conf="${DATADIR}/pacman-$pac_arch.conf"
 
-    work_dir="${chroots_pkg}/${target_branch_pkg}/$1"
-    pkg_dir="${cache_dir_pkg}/${target_branch_pkg}/$1"
+    work_dir="${chroots_pkg}/${target_branch}/$1"
+    pkg_dir="${cache_dir_pkg}/${target_branch}/$1"
 
     makepkg_conf=$(get_makepkg_conf "$1")
 
@@ -106,7 +106,7 @@ init_base_devel(){
 }
 
 chroot_create(){
-    msg "Creating chroot for [%s] (%s)..." "${target_branch_pkg}" "${target_arch}"
+    msg "Creating chroot for [%s] (%s)..." "${target_branch}" "${target_arch}"
     mkdir -p "${work_dir}"
     mkchroot_args+=(-L)
     setarch "${target_arch}" \
@@ -116,7 +116,7 @@ chroot_create(){
 }
 
 chroot_clean(){
-    msg "Cleaning chroot for [%s] (%s)..." "${target_branch_pkg}" "${target_arch}"
+    msg "Cleaning chroot for [%s] (%s)..." "${target_branch}" "${target_arch}"
     for copy in "${work_dir}"/*; do
         [[ -d ${copy} ]] || continue
         msg2 "Deleting chroot copy %s ..." "$(basename "${copy}")"
@@ -132,7 +132,7 @@ chroot_clean(){
 }
 
 chroot_update(){
-    msg "Updating chroot for [%s] (%s)..." "${target_branch_pkg}" "${target_arch}"
+    msg "Updating chroot for [%s] (%s)..." "${target_branch}" "${target_arch}"
     chroot-run ${mkchroot_args[*]} \
             "${work_dir}/${OWNER}" \
             pacman -Syu --noconfirm || abort
@@ -223,3 +223,4 @@ make_pkg(){
     msg "Finished building [%s]" "$1"
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
 }
+

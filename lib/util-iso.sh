@@ -254,7 +254,7 @@ gen_iso_fn(){
     fi
     [[ ${initsys} == 'openrc' ]] && vars+=("${initsys}")
     vars+=("${dist_release}")
-    vars+=("${target_branch_iso}")
+    vars+=("${target_branch}")
     vars+=("${target_arch}")
     for n in ${vars[@]};do
         name=${name:-}${name:+-}${n}
@@ -444,8 +444,8 @@ check_requirements(){
     if ! $(is_valid_arch_iso ${target_arch});then
         die "%s is not a valid arch!" "${target_arch}"
     fi
-    if ! $(is_valid_branch ${target_branch_iso});then
-        die "%s is not a valid branch!" "${target_branch_iso}"
+    if ! $(is_valid_branch ${target_branch});then
+        die "%s is not a valid branch!" "${target_branch}"
     fi
 
     if ! is_valid_init "${initsys}";then
@@ -557,11 +557,11 @@ load_profile(){
 
     pacman_conf=$(get_pacman_conf)
 
-    mirrors_conf=$(get_pac_mirrors_conf "${target_branch_iso}")
+    mirrors_conf=$(get_pac_mirrors_conf "${target_branch}")
 
     iso_file=$(gen_iso_fn).iso
 
-    mkchroot_args+=(-C ${pacman_conf} -S ${mirrors_conf} -B "${build_mirror}/${target_branch_iso}" -K)
+    mkchroot_args+=(-C ${pacman_conf} -S ${mirrors_conf} -B "${build_mirror}/${target_branch}" -K)
     work_dir=${chroots_iso}/${profile}/${target_arch}
 
     iso_dir="${cache_dir_iso}/${edition}/${profile}/${dist_release}"
