@@ -548,40 +548,6 @@ get_pacman_conf(){
     echo "$conf"
 }
 
-load_profile(){
-    conf="$1/profile.conf"
-
-    info "Profile: [%s]" "${profile}"
-
-    load_profile_config "$conf"
-
-    pacman_conf=$(get_pacman_conf)
-
-    mirrors_conf=$(get_pac_mirrors_conf "${target_branch}")
-
-    iso_file=$(gen_iso_fn).iso
-
-    mkchroot_args+=(-C ${pacman_conf} -S ${mirrors_conf} -B "${build_mirror}/${target_branch}" -K)
-    work_dir=${chroots_iso}/${profile}/${target_arch}
-
-    iso_dir="${cache_dir_iso}/${edition}/${profile}/${dist_release}"
-
-    iso_root=${chroots_iso}/${profile}/iso
-    mnt_dir=${chroots_iso}/${profile}/mnt
-    prepare_dir "${mnt_dir}"
-
-    prepare_dir "${iso_dir}"
-    user_own "${cache_dir_iso}" "-R"
-}
-
-prepare_profile(){
-    profile=$1
-    edition=$(get_edition ${profile})
-    profile_dir=${run_dir}/${edition}/${profile}
-    check_profile "${profile_dir}"
-    load_profile "${profile_dir}"
-}
-
 build(){
     prepare_profile "$1"
     make_profile
