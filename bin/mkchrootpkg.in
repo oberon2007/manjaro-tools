@@ -55,7 +55,7 @@ usage() {
     echo ''
     echo 'The chroot "root" directory must be created via the following'
     echo 'command:'
-    echo '    mkarchroot <chrootdir>/root base-devel'
+    echo '    mkchroot <chrootdir>/root base-devel'
     echo ''
     echo 'This script reads {SRC,SRCPKG,PKG,LOG}DEST, MAKEFLAGS and PACKAGER'
     echo 'from makepkg.conf(5), if those variables are not part of the'
@@ -122,24 +122,24 @@ sync_chroot() {
 }
 
 # Usage: delete_chroot $copydir [$copy]
-delete_chroot() {
-    local copydir=$1
-    local copy=${1:-$2}
-
-    stat_busy "Removing chroot copy [%s]" "$copy"
-    if is_btrfs "$chrootdir" && ! mountpoint -q "$copydir"; then
-        subvolume_delete_recursive "$copydir" ||
-            die "Unable to delete subvolume %s" "$copydir"
-    else
-        # avoid change of filesystem in case of an umount failure
-        rm --recursive --force --one-file-system "$copydir" ||
-            die "Unable to delete %s" "$copydir"
-    fi
-
-    # remove lock file
-    rm -f "$copydir.lock"
-    stat_done
-}
+# delete_chroot() {
+#     local copydir=$1
+#     local copy=${1:-$2}
+#
+#     stat_busy "Removing chroot copy [%s]" "$copy"
+#     if is_btrfs "$chrootdir" && ! mountpoint -q "$copydir"; then
+#         subvolume_delete_recursive "$copydir" ||
+#             die "Unable to delete subvolume %s" "$copydir"
+#     else
+#         # avoid change of filesystem in case of an umount failure
+#         rm --recursive --force --one-file-system "$copydir" ||
+#             die "Unable to delete %s" "$copydir"
+#     fi
+#
+#     # remove lock file
+#     rm -f "$copydir.lock"
+#     stat_done
+# }
 
 # Usage: install_packages $copydir $pkgs...
 install_packages() {
@@ -324,7 +324,7 @@ main() {
     # Canonicalize chrootdir, getting rid of trailing /
     chrootdir=$(readlink -e "$passeddir")
     [[ ! -d $chrootdir ]] && die "No chroot dir defined, or invalid path '%s'" "$passeddir"
-    [[ ! -d $chrootdir/root ]] && die "Missing chroot dir root directory. Try using: mkarchroot %s/root base-devel" "$chrootdir"
+    [[ ! -d $chrootdir/root ]] && die "Missing chroot dir root directory. Try using: mkchroot %s/root base-devel" "$chrootdir"
 
     if [[ ${copy:0:1} = / ]]; then
         copydir=$copy

@@ -44,6 +44,35 @@ subvolume_delete_recursive() {
     return 0
 }
 
+create_chroot(){
+    local timer=$(get_timer)
+    local dest="$1"
+    prepare_dir "$dest"
+    setarch "${target_arch}" \
+        mkchroot "${mkchroot_args[@]}" "$@" || abort
+
+    show_elapsed_time "${FUNCNAME}" "${timer}"
+}
+
+delete_chroot() {
+    local copydir=$1
+    local copy=${1:-$2}
+
+    stat_busy "Removing chroot copy [%s]" "$copy"
+    if is_btrfs "$chrootdir" && ! mountpoint -q "$copydir"; then
+        subvolume_delete_recursive "$copydir" ||
+            die "Unable to delete subvolume %s" "$copydir"
+    else
+        # avoid change of filesystem in case of an umount failure
+        rm --recursive --force --one-file-system "$copydir" ||
+            die "Unable to delete %s" "$copydir"
+    fi
+
+    # remove lock file
+    rm -f "$copydir.lock"
+    stat_done
+}
+
 # $1: chroot
 # kill_chroot_process(){
 #     # enable to have more debug info

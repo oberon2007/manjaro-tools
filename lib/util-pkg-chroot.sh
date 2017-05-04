@@ -10,23 +10,26 @@
 # GNU General Public License for more details.
 
 load_compiler_settings(){
-    local tarch="$1" conf
-    conf=${make_conf_dir}/$tarch.conf
+    local arch="$1" conf
+    conf=${make_conf_dir}/$arch.conf
 
     [[ -f $conf ]] || return 1
 
-    info "Loading compiler settings: %s" "$tarch"
+    info "Loading compiler settings: %s" "$arch"
     source $conf
 
     return 0
 }
 
 get_makepkg_conf(){
-    local conf="${tmp_dir}/makepkg-$1.conf"
+    prepare_dir "${tmp_dir}"
+
+    local arch="$1"
+    local conf="${tmp_dir}/makepkg-${arch}.conf"
 
     cp "${DATADIR}/makepkg.conf" "$conf"
 
-    load_compiler_settings "$1"
+    load_compiler_settings "${arch}"
 
     sed -i "$conf" \
         -e "s|@CARCH[@]|$carch|g" \
@@ -36,111 +39,39 @@ get_makepkg_conf(){
     echo "$conf"
 }
 
-# $1: target_arch
-prepare_conf(){
-    if ! is_valid_arch_pkg "$1";then
-        die "%s is not a valid arch!" "$1"
-    fi
-
-    local pac_arch='default'
-
-    if [[ "$1" == 'multilib' ]];then
-        pac_arch='multilib'
-        is_multilib=true
-    fi
-
-    pacman_conf="${DATADIR}/pacman-$pac_arch.conf"
-
-    work_dir="${chroots_pkg}/${target_branch}/$1"
-    pkg_dir="${cache_dir_pkg}/${target_branch}/$1"
-
-    makepkg_conf=$(get_makepkg_conf "$1")
-
-    [[ "$pac_arch" == 'multilib' ]] && target_arch='x86_64'
-}
-
 check_build(){
-    find_pkg $1
-    [[ ! -f $1/PKGBUILD ]] && die "Directory must contain a PKGBUILD!"
+    local bdir="$1"
+    find_pkg "${bdir}"
+    [[ ! -f ${bdir}/PKGBUILD ]] && die "Directory must contain a PKGBUILD!"
 }
 
 find_pkg(){
-    local result=$(find . -type d -name "$1")
-    [[ -z $result ]] && die "%s is not a valid package or build list!" "$1"
-}
-
-load_group(){
-    local _multi \
-        _space="s| ||g" \
-        _clean=':a;N;$!ba;s/\n/ /g' \
-        _com_rm="s|#.*||g" \
-        devel_group='' \
-        file=${DATADIR}/base-devel-udev
-
-        info "Loading custom group: %s" "$file"
-
-    if ${is_multilib}; then
-        _multi="s|>multilib||g"
-    else
-        _multi="s|>multilib.*||g"
-    fi
-
-    devel_group=$(sed "$_com_rm" "$file" \
-            | sed "$_space" \
-            | sed "$_multi" \
-            | sed "$_clean")
-
-        echo ${devel_group}
+    local bdir="$1"
+    local result=$(find . -type d -name "${bdir}")
+    [[ -z $result ]] && die "%s is not a valid package or build list!" "${bdir}"
 }
 
 init_base_devel(){
     if ${udev_root};then
-        base_packages=( "$(load_group)" )
+        local _multi _space="s| ||g" _clean=':a;N;$!ba;s/\n/ /g' _com_rm="s|#.*||g"
+        local file=${DATADIR}/base-devel-udev
+
+#         info "Loading custom group: %s" "$file"
+        _multi="s|>multilib.*||g"
+        ${is_multilib} && _multi="s|>multilib||g"
+
+        packages=($(sed "$_com_rm" "$file" \
+                | sed "$_space" \
+                | sed "$_multi" \
+                | sed "$_clean"))
     else
-        if ${is_multilib};then
-            base_packages=('base-devel' 'multilib-devel')
-        else
-            base_packages=('base-devel')
-        fi
+        packages=('base-devel')
+        ${is_multilib} && packages+=('multilib-devel')
     fi
 }
 
-chroot_create(){
-    msg "Creating chroot for [%s] (%s)..." "${target_branch}" "${target_arch}"
-    mkdir -p "${work_dir}"
-    mkchroot_args+=(-L)
-    setarch "${target_arch}" \
-        mkchroot ${mkchroot_args[*]} \
-        "${work_dir}/root" \
-        ${base_packages[*]} || abort
-}
-
-chroot_clean(){
-    msg "Cleaning chroot for [%s] (%s)..." "${target_branch}" "${target_arch}"
-    for copy in "${work_dir}"/*; do
-        [[ -d ${copy} ]] || continue
-        msg2 "Deleting chroot copy %s ..." "$(basename "${copy}")"
-
-        lock 9 "${copy}.lock" "Locking chroot copy '${copy}'"
-
-        subvolume_delete_recursive "${copy}"
-        rm -rf --one-file-system "${copy}"
-    done
-    exec 9>&-
-
-    rm -rf --one-file-system "${work_dir}"
-}
-
-chroot_update(){
-    msg "Updating chroot for [%s] (%s)..." "${target_branch}" "${target_arch}"
-    chroot-run ${mkchroot_args[*]} \
-            "${work_dir}/${OWNER}" \
-            pacman -Syu --noconfirm || abort
-
-}
-
 clean_up(){
-    msg "Cleaning up ..."
+#     msg "Cleaning up ..."
     msg2 "Cleaning [%s]" "${pkg_dir}"
     find ${pkg_dir} -maxdepth 1 -name "*.*" -delete #&> /dev/null
     if [[ -z $SRCDEST ]];then
@@ -150,35 +81,38 @@ clean_up(){
 }
 
 sign_pkg(){
-    su ${OWNER} -c "signfile ${pkg_dir}/$1"
+    local pkg="$1"
+    su ${OWNER} -c "signfile ${pkg_dir}/${pkg}"
 }
 
 move_to_cache(){
+    prepare_dir "${log_dir}"
+
     local src="$1"
-    [[ -n $PKGDEST ]] && src="$PKGDEST/$1"
+    [[ -n $PKGDEST ]] && src="$PKGDEST/$src"
     [[ ! -f $src ]] && die
     msg2 "Moving [%s] -> [%s]" "${src##*/}" "${pkg_dir}"
     mv $src ${pkg_dir}/
     ${sign} && sign_pkg "${src##*/}"
-    [[ -n $PKGDEST ]] && rm "$1"
+#     [[ -n $PKGDEST ]] && rm "$src"
     user_own "${pkg_dir}" "-R"
 }
 
 archive_logs(){
-    local archive name="$1" ext=log.tar.xz ver src=${tmp_dir}/archives.list target='.'
+    local archive name="$1" ext=log.tar.xz ver src=${tmp_dir}/archives.list dest='.'
     ver=$(get_full_version "$name")
     archive="${name}-${ver}-${target_arch}"
     if [[ -n $LOGDEST ]];then
-            target=$LOGDEST
-            find $target -maxdepth 1 -name "$archive*.log" -printf "%f\n" > $src
+            dest=$LOGDEST
+            find ${dest} -maxdepth 1 -name "$archive*.log" -printf "%f\n" > $src
     else
-            find $target -maxdepth 1 -name "$archive*.log" > $src
+            find ${dest} -maxdepth 1 -name "$archive*.log" > $src
     fi
     msg2 "Archiving log files [%s] ..." "$archive.$ext"
-    tar -cJf ${log_dir}/$archive.$ext  -C "$target" -T $src
+    tar -cJf ${log_dir}/$archive.$ext  -C "${dest}" -T $src
     msg2 "Cleaning log files ..."
 
-    find $target -maxdepth 1 -name "$archive*.log" -delete
+    find ${dest} -maxdepth 1 -name "$archive*.log" -delete
 }
 
 post_build(){
@@ -197,30 +131,23 @@ post_build(){
     archive_logs "$name"
 }
 
-chroot_init(){
-    local timer=$(get_timer)
-    if ${clean_first} || [[ ! -d "${work_dir}" ]]; then
-        chroot_clean
-        chroot_create
-    else
-        chroot_update
-    fi
-    show_elapsed_time "${FUNCNAME}" "${timer}"
-}
-
 build_pkg(){
+    prepare_dir "${pkg_dir}"
+    user_own "${pkg_dir}"
+    ${purge} && clean_up
     setarch "${target_arch}" \
-        mkchrootpkg ${mkchrootpkg_args[*]}
+        mkchrootpkg "${mkchrootpkg_args[@]}"
     post_build
 }
 
 make_pkg(){
-    check_build "$1"
-    msg "Start building [%s]" "$1"
-    cd $1
+    local pkg="$1"
+    check_build "${pkg}"
+    msg "Start building [%s]" "${pkg}"
+    cd ${pkg}
         build_pkg
     cd ..
-    msg "Finished building [%s]" "$1"
+    msg "Finished building [%s]" "${pkg}"
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
 }
 

@@ -18,9 +18,42 @@ SYSCONFDIR='@sysconfdir@'
 [[ -r ${LIBDIR}/util-msg.sh ]] && source ${LIBDIR}/util-msg.sh
 
 import ${LIBDIR}/util.sh
+import ${LIBDIR}/util-iso.sh
+import ${LIBDIR}/util-iso-mount.sh
+
+prepare_build(){
+    timer_start=$(get_timer)
+    profile=$1
+    edition=$(get_edition "${profile}")
+    profile_dir=${run_dir}/${edition}/${profile}
+
+    check_profile "${profile_dir}"
+    load_profile_config "${profile_dir}/profile.conf"
+
+    local pacman_conf=$(get_pacman_conf)
+
+    local mirrors_conf=$(get_pac_mirrors_conf "${target_branch}")
+
+    iso_file=$(gen_iso_fn).iso
+
+    local mirror="${build_mirror}/${target_branch}"
+
+    mkchroot_args+=(-C ${pacman_conf} -S ${mirrors_conf} -B "${mirror}" -K)
+    work_dir=${chroots_iso}/${profile}/${target_arch}
+
+    iso_dir="${cache_dir_iso}/${edition}/${profile}/${dist_release}"
+
+    iso_root=${chroots_iso}/${profile}/iso
+    mnt_dir=${chroots_iso}/${profile}/mnt
+    prepare_dir "${mnt_dir}"
+
+    prepare_dir "${iso_dir}"
+    user_own "${iso_dir}"
+}
 
 show_profile(){
-    prepare_profile "$1"
+    local prof="$1"
+    prepare_build "$prof"
     msg2 "iso_file: %s" "${iso_file}"
     if ${verbose};then
         msg2 "autologin: %s" "${autologin}"
@@ -95,9 +128,6 @@ load_user_info
 
 load_config "${MT_USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}/manjaro-tools.conf"
 
-# to force old way to have buildiso run in iso-profiles dir
-# run_dir=$(pwd)
-
 load_run_dir "${profile_repo}"
 
 clean_first=true
@@ -162,26 +192,9 @@ done
 
 shift $(($OPTIND - 1))
 
-timer_start=$(get_timer)
-
 check_root
 
-prepare_dir "${log_dir}"
-
-prepare_dir "${tmp_dir}"
-
-eval_build_list "${list_dir_iso}" "${build_list_iso}"
-
-import ${LIBDIR}/util-iso.sh
-import ${LIBDIR}/util-iso-mount.sh
-
 check_requirements
-
-for sig in TERM HUP QUIT; do
-    trap "trap_exit $sig \"$(gettext "%s signal caught. Exiting...")\" \"$sig\"" "$sig"
-done
-trap 'trap_exit INT "$(gettext "Aborted by user! Exiting...")"' INT
-trap 'trap_exit USR1 "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 
 ${pretend} && display_settings && exit 1
 

@@ -410,8 +410,8 @@ reset_profile(){
     unset disable_openrc
     unset enable_systemd_live
     unset enable_openrc_live
-    unset packages_desktop
-    unset packages_mhwd
+    unset desktop_list
+    unset mhwd_list
     unset login_shell
     unset netinstall
     unset chrootcfg
@@ -447,9 +447,9 @@ check_profile(){
         die "Profile [%s] sanity check failed!" "$1"
     fi
 
-    [[ -f "$1/Packages-Desktop" ]] && packages_desktop=$1/Packages-Desktop
+    [[ -f "$1/Packages-Desktop" ]] && desktop_list=$1/Packages-Desktop
 
-    [[ -f "$1/Packages-Mhwd" ]] && packages_mhwd=$1/Packages-Mhwd
+    [[ -f "$1/Packages-Mhwd" ]] && mhwd_list=$1/Packages-Mhwd
 
     if ! ${netinstall}; then
         chrootcfg="false"
@@ -553,7 +553,7 @@ load_pkgs(){
         _purge="s|>cleanup.*||g" \
         _purge_rm="s|>cleanup||g"
 
-    packages=$(sed "$_com_rm" "$1" \
+    packages=($(sed "$_com_rm" "$1" \
             | sed "$_space" \
             | sed "$_blacklist" \
             | sed "$_purge" \
@@ -573,18 +573,18 @@ load_pkgs(){
             | sed "$_basic_rm" \
             | sed "$_extra" \
             | sed "$_extra_rm" \
-            | sed "$_clean")
+            | sed "$_clean"))
 
-    if [[ $1 == "${packages_mhwd}" ]]; then
+    if [[ $1 == "${mhwd_list}" ]]; then
 
         [[ ${_used_kernel} < "42" ]] && local _amd="s|xf86-video-amdgpu||g"
 
-        packages_cleanup=$(sed "$_com_rm" "$1" \
+        packages_cleanup=($(sed "$_com_rm" "$1" \
             | grep cleanup \
             | sed "$_purge_rm" \
             | sed "$_kernel" \
             | sed "$_clean" \
-            | sed "$_amd")
+            | sed "$_amd"))
     fi
 }
 
@@ -642,34 +642,6 @@ show_config(){
     else
         msg2 "config: %s" "${manjaro_tools_conf}"
     fi
-}
-
-is_valid_init(){
-    case $1 in
-        'openrc'|'systemd') return 0 ;;
-        *) return 1 ;;
-    esac
-}
-
-is_valid_arch_pkg(){
-    eval "case $1 in
-        $(show_build_profiles "${make_conf_dir}")) return 0 ;;
-        *) return 1 ;;
-    esac"
-}
-
-is_valid_arch_iso(){
-    case $1 in
-        'i686'|'x86_64') return 0 ;;
-        *) return 1 ;;
-    esac
-}
-
-is_valid_branch(){
-    case $1 in
-        'stable'|'testing'|'unstable') return 0 ;;
-        *) return 1 ;;
-    esac
 }
 
 run(){

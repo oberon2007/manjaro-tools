@@ -38,24 +38,28 @@ track_fs() {
 mount_fs_root(){
     FS_ACTIVE_MOUNTS=()
     mkdir -p "${mnt_dir}/work"
+    mkdir -p "$1"
     track_fs -t overlay overlay -olowerdir="${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
 }
 
 mount_fs_desktop(){
     FS_ACTIVE_MOUNTS=()
     mkdir -p "${mnt_dir}/work"
+    mkdir -p "$1"
     track_fs -t overlay overlay -olowerdir="${work_dir}/desktopfs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
 }
 
 mount_fs_live(){
     FS_ACTIVE_MOUNTS=()
     mkdir -p "${mnt_dir}/work"
+    mkdir -p "$1"
     track_fs -t overlay overlay -olowerdir="${work_dir}/livefs":"${work_dir}/desktopfs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
 }
 
 mount_fs_net(){
     FS_ACTIVE_MOUNTS=()
     mkdir -p "${mnt_dir}/work"
+    mkdir -p "$1"
     track_fs -t overlay overlay -olowerdir="${work_dir}/livefs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
 }
 

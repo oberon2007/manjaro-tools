@@ -50,8 +50,11 @@ display_settings(){
 
 
     msg "ARGS:"
+    msg2 "create_first: %s" "${create_first}"
+    msg2 "delete_first: %s" "${delete_first}"
     msg2 "clean_first: %s" "${clean_first}"
-    msg2 "wipe_clean: %s" "${wipe_clean}"
+    msg2 "update_first: %s" "${update_first}"
+    msg2 "purge: %s" "${purge}"
     msg2 "namcap: %s" "${namcap}"
     msg2 "sign: %s" "${sign}"
     msg2 "udev_root: %s" "${udev_root}"
@@ -59,9 +62,9 @@ display_settings(){
     msg "PATHS:"
     msg2 "pkg_dir: %s" "${pkg_dir}"
 
-    if ${clean_first};then
+    if ${create_first};then
         msg "PKG:"
-        msg2 "base_packages: %s" "${base_packages[*]}"
+        msg2 "packages: %s" "${packages[*]}"
     fi
 
     msg "BUILD QUEUE:"
@@ -74,16 +77,54 @@ load_config "${MT_USERCONFDIR}/manjaro-tools.conf" || load_config "${SYSCONFDIR}
 load_vars "${PAC_USERCONFDIR}/makepkg.conf" || load_vars "$USER_HOME/.makepkg.conf"
 load_vars /etc/makepkg.conf
 
-install_pkgs=()
-
+create_first=false
+delete_first=false
 clean_first=false
-wipe_clean=false
+update_first=false
+purge=false
 namcap=false
 pretend=false
 is_build_list=false
 sign=false
 udev_root=false
 is_multilib=false
+
+mkchroot_args=(-L)
+mkchrootpkg_args=()
+
+install_pkgs=()
+
+prepare_build(){
+    local pac_arch='default'
+
+    if [[ "${target_arch}" == 'multilib' ]];then
+        pac_arch='multilib'
+        is_multilib=true
+    fi
+
+    local pacman_conf="${DATADIR}/pacman-$pac_arch.conf"
+
+    work_dir="${chroots_pkg}/${target_branch}/${target_arch}"
+    pkg_dir="${cache_dir_pkg}/${target_branch}/${target_arch}"
+
+    local makepkg_conf=$(get_makepkg_conf "${target_arch}")
+
+    [[ "$pac_arch" == 'multilib' ]] && target_arch='x86_64'
+
+    local mirror="${build_mirror}/${target_branch}"
+
+    local mirrors_conf=$(get_pac_mirrors_conf "${target_branch}")
+
+    mkchroot_args+=(-C ${pacman_conf} -M ${makepkg_conf} -S ${mirrors_conf} -B ${mirror})
+
+    mkchrootpkg_args+=(-r ${work_dir})
+
+    eval_build_list "${list_dir_pkg}" "${build_list_pkg}"
+
+    init_base_devel
+
+    timer_start=$(get_timer)
+}
 
 usage() {
     echo "Usage: ${0##*/} [options]"
@@ -93,11 +134,14 @@ usage() {
     echo '    -r <dir>           Chroots directory'
     echo "                       [default: ${chroots_pkg}]"
     echo '    -i <pkgs>          Install packages into the working copy of the chroot'
-    echo '    -c                 Recreate chroot'
+    echo '    -o                 Create chroot'
+    echo '    -d                 Delete chroot'
+    echo '    -c                 Clean chroot copy'
+    echo '    -u                 Update chroot copy'
     echo '    -w                 Clean up cache and sources'
     echo '    -n                 Install and run namcap check'
     echo '    -s                 Sign packages'
-    echo '    -u                 Udev base-devel group (no systemd)'
+    echo '    -x                 Udev base-devel group (no systemd)'
     echo '    -q                 Query settings and pretend build'
     echo '    -h                 This help'
     echo ''
@@ -107,7 +151,7 @@ usage() {
 
 orig_argv=("$0" "$@")
 
-opts='p:a:b:r:i:cwnsuqh'
+opts='p:a:b:r:i:odcuwnsxqh'
 
 while getopts "${opts}" arg; do
     case "${arg}" in
@@ -115,15 +159,18 @@ while getopts "${opts}" arg; do
         a) target_arch="$OPTARG" ;;
         b) target_branch="$OPTARG" ;;
         r) chroots_pkg="$OPTARG" ;;
-        i) install_pkgs+=("$OPTARG"); mkchrootpkg_args+=(-I ${install_pkgs[*]}) ;;
-        c) clean_first=true ;;
-        w) wipe_clean=true ;;
+        i) install_pkgs+=("$OPTARG"); mkchrootpkg_args+=(-I "${install_pkgs[*]}") ;;
+        o) create_first=true ;;
+        d) delete_first=true ;;
+        c) clean_first=true ; mkchrootpkg_args+=(-c) ;;
+        u) update_first=true ; mkchrootpkg_args+=(-u) ;;
+        w) purge=true ;;
         n) namcap=true; mkchrootpkg_args+=(-n) ;;
         s) sign=true ;;
-        u) udev_root=true ;;
+        x) udev_root=true ;;
         q) pretend=true ;;
         h|?) usage 0 ;;
-        *) echo "invalid argument '${arg}'"; usage 1 ;;
+        *) echo "invalid argument '%s'" "${arg}"; usage 1 ;;
     esac
 done
 
@@ -131,32 +178,12 @@ shift $(($OPTIND - 1))
 
 check_root
 
-prepare_dir "${log_dir}"
-
-prepare_dir "${tmp_dir}"
-
-prepare_conf "${target_arch}"
-
-mirrors_conf=$(get_pac_mirrors_conf "${target_branch}")
-
-mkchroot_args+=(-C ${pacman_conf} -M ${makepkg_conf} -S ${mirrors_conf} -B "${build_mirror}/${target_branch}")
-
-mkchrootpkg_args+=(-r ${work_dir})
-
-timer_start=$(get_timer)
-
-eval_build_list "${list_dir_pkg}" "${build_list_pkg}"
-
-prepare_dir "${pkg_dir}"
-
-user_own "${pkg_dir}"
-
-init_base_devel
+prepare_build
 
 ${pretend} && display_settings && exit
 
-${wipe_clean} && clean_up
+${delete_first} && delete_chroot "${work_dir}" "${work_dir}/root"
 
-chroot_init
+${create_first} && create_chroot "${work_dir}/root" "${packages[@]}"
 
 run make_pkg "${build_list_pkg}"
