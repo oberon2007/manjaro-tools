@@ -96,13 +96,31 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
             <varlistentry>
                 <term><option>-i PKG</option></term>
 
-                <listitem><para>Install a package into the working copy of the chroot.</para></listitem>
+                <listitem><para>Install packages into the working copy of the chroot.</para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-o</option></term>
+
+                <listitem><para>Create chroot.</para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-d</option></term>
+
+                <listitem><para>Delete chroot.</para></listitem>
             </varlistentry>
 
             <varlistentry>
                 <term><option>-c</option></term>
 
-                <listitem><para>Recreate chroot.</para></listitem>
+                <listitem><para>Clean chroot copy.</para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-u</option></term>
+
+                <listitem><para>Update chroot copy.</para></listitem>
             </varlistentry>
 
             <varlistentry>
@@ -121,6 +139,12 @@ along with systemd; If not, see <http://www.gnu.org/licenses/>.
                 <term><option>-s</option></term>
 
                 <listitem><para>Sign package.</para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-x</option></term>
+
+                <listitem><para>Udev base-devel group (no systemd).</para></listitem>
             </varlistentry>
 
             <varlistentry>

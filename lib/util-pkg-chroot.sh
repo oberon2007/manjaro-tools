@@ -22,7 +22,6 @@ load_compiler_settings(){
 }
 
 get_makepkg_conf(){
-    prepare_dir "${tmp_dir}"
 
     local arch="$1"
     local conf="${tmp_dir}/makepkg-${arch}.conf"

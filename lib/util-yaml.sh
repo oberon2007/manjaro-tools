@@ -238,6 +238,14 @@ write_postcfg_conf(){
     fi
 }
 
+write_umount_conf(){
+    local conf="${modules_dir}/umount.conf"
+    msg2 "Writing %s ..." "${conf##*/}"
+    echo "---" > "$conf"
+    echo 'srcLog: "/root/.cache/Calamares/Calamares/Calamares.log"' >> "$conf"
+    echo 'destLog: "/var/log/Calamares.log"' >> "$conf"
+}
+
 get_yaml(){
     local args=() yaml
     if ${chrootcfg};then
@@ -325,7 +333,7 @@ write_settings_conf(){
     echo "        - grubcfg" >> "$conf"
     echo "        - bootloader" >> "$conf" && write_bootloader_conf
     echo "        - postcfg" >> "$conf" && write_postcfg_conf
-    echo "        - umount" >> "$conf"
+    echo "        - umount" >> "$conf" && write_umount_conf
     echo "    - show:" >> "$conf"
     echo "        - finished" >> "$conf" && write_finished_conf
     echo '' >> "$conf"

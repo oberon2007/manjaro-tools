@@ -34,33 +34,25 @@ track_fs() {
     mount "$@" && FS_ACTIVE_MOUNTS=("$5" "${FS_ACTIVE_MOUNTS[@]}")
 }
 
-# $1: new branch
-mount_fs_root(){
+mount_fs(){
     FS_ACTIVE_MOUNTS=()
+    local lower= upper="$1" work="$2" pkglist="$3"
+    local fs=${upper##*/}
+    local rootfs="$work/rootfs" desktopfs="$work/desktopfs" livefs="$work/livefs"
     mkdir -p "${mnt_dir}/work"
-    mkdir -p "$1"
-    track_fs -t overlay overlay -olowerdir="${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
-}
-
-mount_fs_desktop(){
-    FS_ACTIVE_MOUNTS=()
-    mkdir -p "${mnt_dir}/work"
-    mkdir -p "$1"
-    track_fs -t overlay overlay -olowerdir="${work_dir}/desktopfs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
-}
-
-mount_fs_live(){
-    FS_ACTIVE_MOUNTS=()
-    mkdir -p "${mnt_dir}/work"
-    mkdir -p "$1"
-    track_fs -t overlay overlay -olowerdir="${work_dir}/livefs":"${work_dir}/desktopfs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
-}
-
-mount_fs_net(){
-    FS_ACTIVE_MOUNTS=()
-    mkdir -p "${mnt_dir}/work"
-    mkdir -p "$1"
-    track_fs -t overlay overlay -olowerdir="${work_dir}/livefs":"${work_dir}/rootfs",upperdir="$1",workdir="${mnt_dir}/work" "$1"
+    mkdir -p "$upper"
+    case $fs in
+        desktopfs) lower="$rootfs" ;;
+        livefs|mhwdfs)
+            lower="$rootfs"
+            [[ -f $pkglist ]] && lower="$desktopfs":"$rootfs"
+        ;;
+        bootfs)
+            lower="$livefs":"$rootfs"
+            [[ -f $pkglist ]] && lower="$livefs":"$desktopfs":"$rootfs"
+        ;;
+    esac
+    track_fs -t overlay overlay -olowerdir="$lower",upperdir="$upper",workdir="${mnt_dir}/work" "$upper"
 }
 
 umount_fs(){

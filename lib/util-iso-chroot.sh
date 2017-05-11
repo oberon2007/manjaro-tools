@@ -10,28 +10,31 @@
 # GNU General Public License for more details.
 
 copy_overlay(){
-    if [[ -e $1 ]];then
-        msg2 "Copying [%s] ..." "${1##*/}"
-        if [[ -L $1 ]];then
-            cp -a --no-preserve=ownership $1/* $2
+    local src="$1" dest="$2"
+    if [[ -e $src ]];then
+        msg2 "Copying [%s] ..." "${src##*/}"
+        if [[ -L $src ]];then
+            cp -a --no-preserve=ownership $src/* $dest
         else
-            cp -LR $1/* $2
+            cp -LR $src/* $dest
         fi
     fi
 }
 
 add_svc_rc(){
-    if [[ -f $1/etc/init.d/$2 ]];then
-        msg2 "Setting %s ..." "$2"
-        chroot $1 rc-update add $2 default &>/dev/null
+    local mnt="$1" name="$2"
+    if [[ -f $mnt/etc/init.d/$name ]];then
+        msg2 "Setting %s ..." "$name"
+        chroot $mnt rc-update add $name default &>/dev/null
     fi
 }
 
 add_svc_sd(){
-    if [[ -f $1/etc/systemd/system/$2.service ]] || \
-    [[ -f $1/usr/lib/systemd/system/$2.service ]];then
-        msg2 "Setting %s ..." "$2"
-        chroot $1 systemctl enable $2 &>/dev/null
+    local mnt="$1" name="$2"
+    if [[ -f $mnt/etc/systemd/system/$name.service ]] || \
+    [[ -f $mnt/usr/lib/systemd/system/$name.service ]];then
+        msg2 "Setting %s ..." "$name"
+        chroot $mnt systemctl enable $name &>/dev/null
     fi
 }
 
@@ -81,19 +84,22 @@ configure_hosts(){
 }
 
 configure_lsb(){
-    if [ -e $1/etc/lsb-release ] ; then
+    local conf=$1/etc/lsb-release
+    if [[ -e $conf ]] ; then
         msg2 "Configuring lsb-release"
-        sed -i -e "s/^.*DISTRIB_RELEASE.*/DISTRIB_RELEASE=${dist_release}/" $1/etc/lsb-release
-        sed -i -e "s/^.*DISTRIB_CODENAME.*/DISTRIB_CODENAME=${dist_codename}/" $1/etc/lsb-release
+        sed -i -e "s/^.*DISTRIB_RELEASE.*/DISTRIB_RELEASE=${dist_release}/" $conf
+        sed -i -e "s/^.*DISTRIB_CODENAME.*/DISTRIB_CODENAME=${dist_codename}/" $conf
     fi
 }
 
 configure_logind(){
     msg2 "Configuring logind ..."
     local conf=$1/etc/$2/logind.conf
-    sed -i 's/#\(HandleSuspendKey=\)suspend/\1ignore/' "$conf"
-    sed -i 's/#\(HandleLidSwitch=\)suspend/\1ignore/' "$conf"
-    sed -i 's/#\(HandleHibernateKey=\)hibernate/\1ignore/' "$conf"
+    if [[ -e $conf ]];then
+        sed -i 's/#\(HandleSuspendKey=\)suspend/\1ignore/' "$conf"
+        sed -i 's/#\(HandleLidSwitch=\)suspend/\1ignore/' "$conf"
+        sed -i 's/#\(HandleHibernateKey=\)hibernate/\1ignore/' "$conf"
+    fi
 }
 
 configure_journald(){
@@ -103,23 +109,24 @@ configure_journald(){
 }
 
 configure_services(){
+    local mnt="$1"
     info "Configuring [%s]" "${initsys}"
     case ${initsys} in
         'openrc')
             for svc in ${enable_openrc[@]}; do
-                [[ $svc == "xdm" ]] && set_xdm "$1"
-                add_svc_rc "$1" "$svc"
+                [[ $svc == "xdm" ]] && set_xdm "$mnt"
+                add_svc_rc "$mnt" "$svc"
             done
             for svc in ${enable_openrc_live[@]}; do
-                add_svc_rc "$1" "$svc"
+                add_svc_rc "$mnt" "$svc"
             done
         ;;
         'systemd')
             for svc in ${enable_systemd[@]}; do
-                add_svc_sd "$1" "$svc"
+                add_svc_sd "$mnt" "$svc"
             done
             for svc in ${enable_systemd_live[@]}; do
-                add_svc_sd "$1" "$svc"
+                add_svc_sd "$mnt" "$svc"
             done
         ;;
     esac
@@ -155,10 +162,11 @@ write_live_session_conf(){
 }
 
 configure_system(){
+    local mnt="$1"
     case ${initsys} in
         'systemd')
-            configure_logind "$1" "systemd"
-            configure_journald "$1"
+            configure_logind "$mnt" "systemd"
+            configure_journald "$mnt"
 
             # Prevent some services to be started in the livecd
             echo 'File created by manjaro-tools. See systemd-update-done.service(8).' \
@@ -168,90 +176,89 @@ configure_system(){
             ln -sf /dev/null "${path}/usr/lib/systemd/system-generators/systemd-gpt-auto-generator"
         ;;
         'openrc')
-            configure_logind "$1" "elogind"
-#             local hn='hostname="'${hostname}'"'
-#             sed -i -e "s|^.*hostname=.*|${hn}|" $1/etc/conf.d/hostname
+            configure_logind "$mnt" "elogind"
         ;;
     esac
-    echo ${hostname} > $1/etc/hostname
+    echo ${hostname} > $mnt/etc/hostname
 }
 
 make_repo(){
-    repo-add $1${mhwd_repo}/mhwd.db.tar.gz $1${mhwd_repo}/*pkg*z
+    local dest="$1"
+    cp ${DATADIR}/pacman-mhwd.conf $dest/opt
+    repo-add $dest${mhwd_repo}/mhwd.db.tar.gz $dest${mhwd_repo}/*pkg*z
 }
 
 clean_iso_root(){
-    msg2 "Deleting isoroot [%s] ..." "${1##*/}"
-    rm -rf --one-file-system "$1"
+    local dest="$1"
+    msg2 "Deleting isoroot [%s] ..." "${dest##*/}"
+    rm -rf --one-file-system "$dest"
 }
 
 clean_up_image(){
-    msg2 "Cleaning [%s]" "${1##*/}"
 
-    local path
+    local path mnt="$1"
+    msg2 "Cleaning [%s]" "${mnt##*/}"
     if [[ ${1##*/} == 'mhwdfs' ]];then
-        path=$1/var
+        path=$mnt/var
         if [[ -d $path ]];then
             find "$path" -mindepth 0 -delete &> /dev/null
         fi
-        path=$1/etc
+        path=$mnt/etc
         if [[ -d $path ]];then
             find "$path" -mindepth 0 -delete &> /dev/null
         fi
     else
-        [[ -f "$1/etc/locale.gen.bak" ]] && mv "$1/etc/locale.gen.bak" "$1/etc/locale.gen"
-        [[ -f "$1/etc/locale.conf.bak" ]] && mv "$1/etc/locale.conf.bak" "$1/etc/locale.conf"
-        path=$1/boot
+        [[ -f "$mnt/etc/locale.gen.bak" ]] && mv "$mnt/etc/locale.gen.bak" "$mnt/etc/locale.gen"
+        [[ -f "$mnt/etc/locale.conf.bak" ]] && mv "$mnt/etc/locale.conf.bak" "$mnt/etc/locale.conf"
+        path=$mnt/boot
         if [[ -d "$path" ]]; then
             find "$path" -name 'initramfs*.img' -delete &> /dev/null
         fi
-        path=$1/var/lib/pacman/sync
+        path=$mnt/var/lib/pacman/sync
         if [[ -d $path ]];then
             find "$path" -type f -delete &> /dev/null
         fi
-        path=$1/var/cache/pacman/pkg
+        path=$mnt/var/cache/pacman/pkg
         if [[ -d $path ]]; then
             find "$path" -type f -delete &> /dev/null
         fi
-        path=$1/var/log
+        path=$mnt/var/log
         if [[ -d $path ]]; then
             find "$path" -type f -delete &> /dev/null
         fi
-        path=$1/var/tmp
+        path=$mnt/var/tmp
         if [[ -d $path ]];then
             find "$path" -mindepth 1 -delete &> /dev/null
         fi
-        path=$1/tmp
+        path=$mnt/tmp
         if [[ -d $path ]];then
             find "$path" -mindepth 1 -delete &> /dev/null
+        fi
+
+        if [[ ${mnt##*/} == 'livefs' ]];then
+            rm -rf "$mnt/etc/pacman.d/gnupg"
         fi
     fi
-	find "$1" -name *.pacnew -name *.pacsave -name *.pacorig -delete
-	file=$1/boot/grub/grub.cfg
-        if [[ -f "$file" ]]; then
-            rm $file
-        fi
+
+    find "$mnt" -name *.pacnew -name *.pacsave -name *.pacorig -delete
+    file=$mnt/boot/grub/grub.cfg
+    if [[ -f "$file" ]]; then
+        rm $file
+    fi
 }
 
 copy_from_cache(){
-    local list="${tmp_dir}"/mhwd-cache.list
-    chroot-run \
-        -r "${bindmounts_ro[*]}" \
-        -w "${bindmounts_rw[*]}" \
-        -B "${build_mirror}/${target_branch}" \
-        "$1" \
-        pacman -v -Syw $2 --noconfirm || return 1
-    chroot-run \
-        -r "${bindmounts_ro[*]}" \
-        -w "${bindmounts_rw[*]}" \
-        -B "${build_mirror}/${target_branch}" \
-        "$1" \
-        pacman -v -Sp $2 --noconfirm > "$list"
+    local list="${tmp_dir}"/mhwd-cache.list mirror="${build_mirror}/${target_branch}"
+    local mnt="$1"; shift
+    chroot-run -B "$mirror" "$mnt" \
+        pacman -v -Syw --noconfirm "$@" || return 1
+    chroot-run -B "$mirror" "$mnt" \
+        pacman -v -Sp --noconfirm "$@" > "$list"
     sed -ni '/.pkg.tar.xz/p' "$list"
     sed -i "s/.*\///" "$list"
 
     msg2 "Copying mhwd package cache ..."
-    rsync -v --files-from="$list" /var/cache/pacman/pkg "$1${mhwd_repo}"
+    rsync -v --files-from="$list" /var/cache/pacman/pkg "$mnt${mhwd_repo}"
 }
 
 chroot_clean(){
@@ -260,7 +267,7 @@ chroot_clean(){
         [[ -d ${root} ]] || continue
         local name=${root##*/}
         if [[ $name != "mhwdfs" ]];then
-            lock 9 "$name.lock" "Locking chroot copy [%s]" "$name"
+#             lock 9 "$name.lock" "Locking chroot copy [%s]" "$name"
             delete_chroot "${root}" "$dest"
         fi
     done
@@ -270,19 +277,21 @@ chroot_clean(){
 
 prepare_initcpio(){
     msg2 "Copying initcpio ..."
-    cp /etc/initcpio/hooks/miso* $1/etc/initcpio/hooks
-    cp /etc/initcpio/install/miso* $1/etc/initcpio/install
-    cp /etc/initcpio/miso_shutdown $1/etc/initcpio
+    local dest="$1"
+    cp /etc/initcpio/hooks/miso* $dest/etc/initcpio/hooks
+    cp /etc/initcpio/install/miso* $dest/etc/initcpio/install
+    cp /etc/initcpio/miso_shutdown $dest/etc/initcpio
 }
 
 prepare_initramfs(){
-    cp ${DATADIR}/mkinitcpio.conf $1/etc/mkinitcpio-${iso_name}.conf
-    local _kernver=$(cat $1/usr/lib/modules/*/version)
+    local mnt="$1"
+    cp ${DATADIR}/mkinitcpio.conf $mnt/etc/mkinitcpio-${iso_name}.conf
+    local _kernver=$(cat $mnt/usr/lib/modules/*/version)
     if [[ -n ${gpgkey} ]]; then
         su ${OWNER} -c "gpg --export ${gpgkey} >${MT_USERCONFDIR}/gpgkey"
         exec 17<>${MT_USERCONFDIR}/gpgkey
     fi
-    MISO_GNUPG_FD=${gpgkey:+17} chroot-run $1 \
+    MISO_GNUPG_FD=${gpgkey:+17} chroot-run $mnt \
         /usr/bin/mkinitcpio -k ${_kernver} \
         -c /etc/mkinitcpio-${iso_name}.conf \
         -g /boot/initramfs.img
@@ -296,10 +305,11 @@ prepare_initramfs(){
 }
 
 prepare_boot_extras(){
-    cp $1/boot/intel-ucode.img $2/intel_ucode.img
-    cp $1/usr/share/licenses/intel-ucode/LICENSE $2/intel_ucode.LICENSE
-    cp $1/boot/memtest86+/memtest.bin $2/memtest
-    cp $1/usr/share/licenses/common/GPL2/license.txt $2/memtest.COPYING
+    local src="$1" dest="$2"
+    cp $src/boot/intel-ucode.img $dest/intel_ucode.img
+    cp $src/usr/share/licenses/intel-ucode/LICENSE $dest/intel_ucode.LICENSE
+    cp $src/boot/memtest86+/memtest.bin $dest/memtest
+    cp $src/usr/share/licenses/common/GPL2/license.txt $dest/memtest.COPYING
 }
 
 prepare_grub(){

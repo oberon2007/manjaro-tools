@@ -1,8 +1,6 @@
 manjaro-tools
 =============
 
-Manjaro-tools-0.14
-
 User manual
 
 ### 1. manjaro-tools.conf
@@ -64,9 +62,6 @@ overriding
 
 # build dir where buildpkg or buildiso chroots are created
 # chroots_dir=/var/lib/manjaro-tools
-
-# log dir where log files are created
-# log_dir='/var/log/manjaro-tools'
 
 # custom build mirror server
 # build_mirror=http://mirror.netzspielplatz.de/manjaro/packages

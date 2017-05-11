@@ -31,9 +31,9 @@ display_settings(){
     show_version
     show_config
 
-    msg "PROFILE:"
-    msg2 "build_lists: %s" "$(show_build_lists ${list_dir_iso})"
-    msg2 "build_list_iso: %s" "${build_list_iso}"
+#     msg "PROFILE:"
+#     msg2 "build_lists: %s" "$(show_build_lists ${list_dir_iso})"
+#     msg2 "build_list_iso: %s" "${build_list_iso}"
     msg2 "is_build_list: %s" "${is_build_list}"
 
     msg "OPTIONS:"

@@ -160,11 +160,11 @@ init_common(){
 
     [[ -z ${chroots_dir} ]] && chroots_dir='/var/lib/manjaro-tools'
 
-    [[ -z ${log_dir} ]] && log_dir='/var/log/manjaro-tools'
-
     [[ -z ${build_mirror} ]] && build_mirror='http://mirror.netzspielplatz.de/manjaro/packages'
 
-    [[ -z ${tmp_dir} ]] && tmp_dir='/tmp/manjaro-tools'
+    log_dir='/var/log/manjaro-tools'
+
+    tmp_dir='/tmp'
 }
 
 init_buildtree(){

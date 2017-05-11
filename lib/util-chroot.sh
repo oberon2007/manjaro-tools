@@ -46,11 +46,8 @@ subvolume_delete_recursive() {
 
 create_chroot(){
     local timer=$(get_timer)
-    local dest="$1"
-    prepare_dir "$dest"
     setarch "${target_arch}" \
-        mkchroot "${mkchroot_args[@]}" "$@" || abort
-
+        mkchroot "$@"
     show_elapsed_time "${FUNCNAME}" "${timer}"
 }
 

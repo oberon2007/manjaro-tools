@@ -38,9 +38,9 @@ display_settings(){
     show_version
     show_config
 
-    msg "PROFILE:"
-    msg2 "build_lists: %s" "$(show_build_lists ${list_dir_pkg})"
-    msg2 "build_list_pkg: %s" "${build_list_pkg}"
+#     msg "PROFILE:"
+#     msg2 "build_lists: %s" "$(show_build_lists ${list_dir_pkg})"
+#     msg2 "build_list_pkg: %s" "${build_list_pkg}"
     msg2 "is_build_list: %s" "${is_build_list}"
 
     msg "OPTIONS:"
@@ -184,6 +184,6 @@ ${pretend} && display_settings && exit
 
 ${delete_first} && delete_chroot "${work_dir}/root" "${work_dir}"
 
-${create_first} && create_chroot "${work_dir}/root" "${packages[@]}"
+${create_first} && create_chroot "${mkchroot_args[@]}" "${work_dir}/root" "${packages[@]}"
 
 run make_pkg "${build_list_pkg}"
