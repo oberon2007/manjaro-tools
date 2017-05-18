@@ -8,9 +8,9 @@ import ${LIBDIR}/util.sh
 
 for f in $(find . -maxdepth 1 -name '*.iso' | cut -d'/' -f2); do
     if [[ ! -e $f.md5 ]]; then
-        create_chksums
+        create_chksums $f
     elif [[ $f -nt $f.md5 ]]; then
-        create_chksums
+        create_chksums $f
     else
         info "checksums for [$f] already created"
     fi
