@@ -7,9 +7,9 @@ LIBDIR='/usr/lib/manjaro-tools'
 import ${LIBDIR}/util.sh
 
 for f in $(find . -maxdepth 1 -name '*.iso' | cut -d'/' -f2); do
-    if [[ ! -e $f.md5 ]]; then
+    if [[ ! -e $f.sha256 ]]; then
         create_chksums $f
-    elif [[ $f -nt $f.md5 ]]; then
+    elif [[ $f -nt $f.sha256 ]]; then
         create_chksums $f
     else
         info "checksums for [$f] already created"

@@ -665,6 +665,6 @@ check_root() {
 
 create_chksums() {
     msg2 "creating checksums for [$1]"
-    md5sum $1 > $1.md5
     sha1sum $1 > $1.sha1
+    sha256sum $1 > $1.sha256
 }
