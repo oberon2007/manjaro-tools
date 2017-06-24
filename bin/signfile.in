@@ -28,4 +28,5 @@ if [ ! -e "$1" ]; then
 fi
 
 msg2 "Signing [%s] with key %s" "${1##*/}" "${GPGKEY}..."
+[[ -e "$1".sig ]] && rm "$1".sig
 gpg --detach-sign --use-agent -u "${GPGKEY}" "$1"
