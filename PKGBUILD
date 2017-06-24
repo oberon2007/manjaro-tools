@@ -10,7 +10,7 @@ pkgname=('manjaro-tools-base-git'
         'manjaro-tools-pkg-git'
         'manjaro-tools-iso-git'
         'manjaro-tools-yaml-git')
-pkgver=r2627.b4bf69a
+pkgver=r2690.7eb802b
 pkgrel=1
 arch=('any')
 pkgdesc='Development tools for Manjaro Linux'
@@ -24,7 +24,7 @@ sha256sums=('SKIP')
 prepare() {
     cd ${srcdir}/${_pkgbase}
     # patches here
-    sed -e "s/^Version=.*/Version=$_ver/" -i Makefile
+    #sed -e "s/^Version=.*/Version=$_ver/" -i Makefile
     #sed -e "s/^Version=.*/Version=$pkgver/" -i Makefile
 }
 
