@@ -222,6 +222,7 @@ EOF
 # These functions aren't run in makechrootpkg,
 # so no global variables
 _chrootbuild() {
+    export LC_ALL=C
     . /etc/profile
     sudo -iu builduser bash -c 'cd /startdir; makepkg "$@"' -bash "$@"
 }
