@@ -41,15 +41,15 @@ prepare_transfer(){
     edition=$(get_edition "${profile}")
     url=$(connect)
 
-    target_dir="${profile}/${dist_release}"
-    src_dir="${run_dir}/${edition}/${target_dir}"
+    target_dir="${project}/${dist_release}"
+    src_dir="${run_dir}/${edition}/${profile}"
     ${torrent} && make_torrent
 }
 
 sync_dir(){
     prepare_transfer "$1"
-    msg "Start upload [%s] ..." "$1"
-    rsync ${rsync_args[*]} ${src_dir}/ ${url}/${target_dir}/
+    msg "Start upload [%s] --> [${project}/${dist_release}] ..." "${profile}"
+    rsync ${rsync_args[*]} ${src_dir}/ ${url}/
     msg "Done upload [%s]" "$1"
     show_elapsed_time "${FUNCNAME}" "${timer_start}"
 }
