@@ -109,7 +109,7 @@ opts='p:a:b:r:i:cwnsuqh'
 
 while getopts "${opts}" arg; do
     case "${arg}" in
-        p) build_list_pkg="${OPTARG//\/}" ;;
+        p) build_list_pkg="${OPTARG%/}" ;;
         a) target_arch="$OPTARG" ;;
         b) target_branch="$OPTARG" ;;
         r) chroots_pkg="$OPTARG" ;;
