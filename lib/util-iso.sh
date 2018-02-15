@@ -421,9 +421,10 @@ check_requirements(){
         die "%s is not a valid init system!" "${initsys}"
     fi
 
-    local host_kernel=$(uname -r)
-    if [[ ${host_kernel%%*.} < "4" ]];then
-        die "The host kernel must be version>=4.0!"
+    local iso_kernel=${kernel:5:1} host_kernel=$(uname -r)
+    if [[ ${iso_kernel} < "4" ]] \
+    || [[ ${host_kernel%%*.} < "4" ]];then
+        die "The host and iso kernels must be version>=4.0!"
     fi
 }
 
