@@ -211,7 +211,7 @@ init_common(){
 
     [[ -z ${log_dir} ]] && log_dir='/var/log/manjaro-tools'
 
-    [[ -z ${build_mirror} ]] && build_mirror='http://mirror.netzspielplatz.de/manjaro/packages'
+    [[ -z ${build_mirror} ]] && build_mirror='https://mirror.netzspielplatz.de/manjaro/packages'
 
     [[ -z ${tmp_dir} ]] && tmp_dir='/tmp/manjaro-tools'
 }
@@ -433,9 +433,11 @@ load_profile_config(){
     [[ -z ${smb_workgroup} ]] && smb_workgroup=''
 
     basic='true'
-    [[ -z ${extra} ]] && extra='false'
+    extra='false'
 
-    ${extra} && basic='false'
+    [[ ${full_iso} ]] && extra='true'
+
+    [[ ${extra} ]] && basic='false'
 
     return 0
 }
@@ -470,6 +472,7 @@ reset_profile(){
     unset chrootcfg
     unset geoip
     unset extra
+    unset full_iso
 }
 
 check_profile(){
